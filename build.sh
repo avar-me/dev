@@ -25,6 +25,7 @@ echo "=== 2. Очистка docs/ и копирование шаблонов ===
 rm -rf "$DOCS"
 mkdir -p "$DOCS/tma"
 cp "$TPL/html/index.html" "$TPL/html/app.js" "$TPL/html/styles.css" "$DOCS/"
+cp "$TPL/html/favicon.ico" "$TPL/html/favicon-32.png" "$TPL/html/favicon-192.png" "$DOCS/"
 cp "$TPL/tma/index.html"  "$TPL/tma/app.js"  "$TPL/tma/styles.css"  "$DOCS/tma/"
 
 echo ""
