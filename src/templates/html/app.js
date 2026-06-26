@@ -923,18 +923,23 @@ async function loadAndDisplayWord(word) {
 // DICTIONARY TYPE SWITCHING
 // ============================================================================
 
+const DICT_TITLES = {
+    'av-ru': { h1: 'Аварско-русский<br><span class="dot">словарь</span>', doc: 'Аварско-русский словарь — dev.avar.me' },
+    'ru-av': { h1: 'Русско-аварский<br><span class="dot">словарь</span>', doc: 'Русско-аварский словарь — dev.avar.me' },
+};
+
 /**
  * Switch dictionary type (av-ru / ru-av)
  */
 async function switchDictType(newType) {
     if (newType === state.currentDictType) return;
-    
+
     try {
         showLoading(true);
-        
+
         // Update state
         state.currentDictType = newType;
-        
+
         // Load new index and manifest
         state.wordsIndex = await loadWordsIndex(newType);
         state.headwordsIndex = await loadHeadwordsIndex(newType);
@@ -942,23 +947,29 @@ async function switchDictType(newType) {
         state.formToHeadword = await loadFormToHeadword(newType);
         state.browse = await loadBrowse(newType);
         state.manifest = await loadManifest(newType);
-        
+
         // Clear cache and results
         state.chunkCache.clear();
         clearSearchView();
-        
+
         // Update UI
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.type === newType);
         });
-        
+        const t = DICT_TITLES[newType];
+        if (t) {
+            const titleEl = document.getElementById('dictTitle');
+            if (titleEl) titleEl.innerHTML = t.h1;
+            document.title = t.doc;
+        }
+
         // Clear search input
         const searchInput = document.getElementById('searchInput');
         searchInput.value = '';
         searchInput.focus();
-        
+
         showLoading(false);
-        
+
         console.log(`Switched to ${newType}`);
     } catch (error) {
         console.error('Error switching dictionary type:', error);
@@ -1088,6 +1099,11 @@ async function init() {
         state.browse = await loadBrowse(state.currentDictType);
         state.manifest = await loadManifest(state.currentDictType);
         
+        // Mark initial active toggle button
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.type === state.currentDictType);
+        });
+
         // Initialize event listeners
         initEventListeners();
         

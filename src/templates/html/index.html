@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Аварско-русский словарь — dev.avar.me">
+    <meta name="description" content="Аварско-русский и русско-аварский словарь — dev.avar.me">
     <meta name="keywords" content="аварский язык, русский язык, словарь, перевод, Дагестан">
     <meta name="author" content="dev.avar.me">
 
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Аварско-русский словарь">
-    <meta property="og:description" content="Аварско-русский словарь — dev.avar.me">
+    <meta property="og:description" content="Аварско-русский и русско-аварский словарь — dev.avar.me">
     <meta property="og:url" content="https://dev.avar.me">
 
     <title>Аварско-русский словарь — dev.avar.me</title>
@@ -38,7 +38,11 @@
         <!-- Header -->
         <header class="header">
             <p class="header-tag">dev.avar.me</p>
-            <h1 class="title">Аварско-русский<br><span class="dot">словарь</span></h1>
+            <h1 class="title" id="dictTitle">Аварско-русский<br><span class="dot">словарь</span></h1>
+            <div class="dict-toggle">
+                <button class="toggle-btn active" data-type="av-ru">Авар → Рус</button>
+                <button class="toggle-btn" data-type="ru-av">Рус → Авар</button>
+            </div>
         </header>
 
         <!-- Search Section -->

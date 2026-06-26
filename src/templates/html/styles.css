@@ -149,6 +149,48 @@ a:hover {
 }
 
 /* ============================================================================
+   DICT TOGGLE
+   ============================================================================ */
+
+.dict-toggle {
+  display: inline-flex;
+  gap: 0;
+  margin-top: 1.25rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.toggle-btn {
+  padding: 0.45rem 1.1rem;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.toggle-btn + .toggle-btn {
+  border-left: 1.5px solid var(--border-strong);
+}
+
+.toggle-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text);
+}
+
+.toggle-btn.active {
+  background: var(--bg-card);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ============================================================================
    SEARCH SECTION
    ============================================================================ */
 

@@ -595,9 +595,10 @@ def main() -> None:
         sys.exit(1)
 
     docs_root = Path(os.environ.get("DOCS_ROOT", DEFAULT_DOCS)).resolve()
+    dict_name = os.environ.get("DICT_NAME", "av-ru")
     targets = [
-        docs_root / "data" / "av-ru",
-        docs_root / "tma" / "data" / "av-ru",
+        docs_root / "data" / dict_name,
+        docs_root / "tma" / "data" / dict_name,
     ]
     ok = 0
     for out in targets:
@@ -605,7 +606,7 @@ def main() -> None:
             ok += 1
     if ok != len(targets):
         sys.exit(1)
-    print(f"\nГотово: {docs_root.name}/data/av-ru и {docs_root.name}/tma/data/av-ru")
+    print(f"\nГотово: {docs_root.name}/data/{dict_name} и {docs_root.name}/tma/data/{dict_name}")
 
 
 if __name__ == "__main__":
