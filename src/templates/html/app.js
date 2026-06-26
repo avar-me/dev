@@ -904,10 +904,6 @@ async function loadAndDisplayWord(word) {
             updateSearchStats(word, 1);
             const urlWord = wordForUrl(word);
             window.location.hash = `word=${encodeURIComponent(urlWord)}`;
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput && urlWord !== word) {
-                searchInput.value = urlWord;
-            }
         } else {
             renderNotFound();
             updateSearchStats(word, 0);
