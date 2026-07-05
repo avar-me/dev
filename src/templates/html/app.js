@@ -1061,12 +1061,16 @@ function initEventListeners() {
         }
     });
     
-    // Handle URL hash
+    // Handle URL hash (back/forward, открытие по ссылке).
+    // Пока строка поиска в фокусе — пользователь печатает, хэш меняется
+    // из-за резолва формы в лемму (loadAndDisplayWord), а не из-за навигации.
     window.addEventListener('hashchange', () => {
+        if (document.activeElement === searchInput) return;
+
         const hash = window.location.hash.slice(1);
         const params = new URLSearchParams(hash);
         const word = params.get('word');
-        
+
         if (word) {
             searchInput.value = word;
             loadAndDisplayWord(word);
