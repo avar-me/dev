@@ -154,6 +154,14 @@ function renderEmptyState() {
     document.getElementById('phraseStats').textContent = '';
 }
 
+/** #text=... в URL — чтобы на найденную фразу можно было дать ссылку. */
+function updateHash(query) {
+    const url = query
+        ? `${window.location.pathname}${window.location.search}#text=${encodeURIComponent(query)}`
+        : window.location.pathname + window.location.search;
+    history.replaceState(null, '', url);
+}
+
 function runSearch(query) {
     const statsEl = document.getElementById('phraseStats');
     if (!query || query.length < CONFIG.MIN_QUERY_LEN) {
@@ -168,6 +176,7 @@ function runSearch(query) {
 }
 
 const handleInput = debounce((query) => {
+    updateHash(query);
     runSearch(query);
 }, CONFIG.DEBOUNCE_DELAY);
 
@@ -183,6 +192,11 @@ function showError(message) {
     setTimeout(() => {
         el.style.display = 'none';
     }, 5000);
+}
+
+function readHashQuery() {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    return params.get('text') || '';
 }
 
 async function init() {
@@ -221,9 +235,28 @@ async function init() {
         handleInput.cancel();
         input.value = '';
         clearBtn.style.display = 'none';
+        updateHash('');
         renderEmptyState();
         input.focus();
     });
+
+    // Назад/вперёд в браузере — пока поле в фокусе, значит пользователь
+    // печатает и сам обновляет хэш через updateHash(); не перебиваем его.
+    window.addEventListener('hashchange', () => {
+        if (document.activeElement === input) return;
+        const query = readHashQuery();
+        input.value = query;
+        clearBtn.style.display = query ? 'block' : 'none';
+        runSearch(query);
+    });
+
+    // #text=... в ссылке — сразу показать результат
+    const initialQuery = readHashQuery();
+    if (initialQuery) {
+        input.value = initialQuery;
+        clearBtn.style.display = 'block';
+        runSearch(initialQuery);
+    }
 
     input.focus();
 }
