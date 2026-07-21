@@ -190,6 +190,19 @@ a:hover {
   font-weight: 600;
 }
 
+.header-link {
+  margin-top: 0.75rem;
+  font-size: 0.84rem;
+}
+
+.header-link a {
+  color: var(--text-muted);
+}
+
+.header-link a:hover {
+  color: var(--accent);
+}
+
 /* ============================================================================
    SEARCH SECTION
    ============================================================================ */
