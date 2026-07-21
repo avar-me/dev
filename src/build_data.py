@@ -23,6 +23,7 @@ from pathlib import Path
 
 MAX_CHUNK_SIZE = 100 * 1024
 MAX_WORDS_PER_CHUNK = 500
+PHRASE_CHUNK_SIZE = 4000
 
 # repo/src/build_data.py → parents[1] = корень репозитория
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -568,6 +569,78 @@ def write_manifest(
     print(f"Manifest: {manifest_file}")
 
 
+def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> None:
+    """Полнотекстовый индекс фраз для /phrases: examples + пары word:sense.text.
+
+    direction: "av-ru" — word аварский, sense.text русский;
+               "ru-av" — word русский, sense.text аварский.
+    Каждая фраза — [word, av, ru, comment] (comment: пометы примера + его comment,
+    объединённые через "; "; пустая строка если нет).
+    """
+    phrases: list[list[str]] = []
+    with open(dictionary_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            word = (raw.get("word") or "").strip()
+            if not word:
+                continue
+            senses = raw.get("senses") or raw.get("translations") or []
+            for sense in senses:
+                if not isinstance(sense, dict):
+                    continue
+                text = (sense.get("text") or "").strip()
+                if text:
+                    if direction == "av-ru":
+                        phrases.append([word, word, text, ""])
+                    else:
+                        phrases.append([word, text, word, ""])
+                for ex in sense.get("examples") or []:
+                    av = (ex.get("av") or "").strip()
+                    ru = (ex.get("ru") or "").strip()
+                    if not av and not ru:
+                        continue
+                    note_parts: list[str] = []
+                    for lab in ex.get("labels") or []:
+                        s = str(lab).strip()
+                        if s and s not in note_parts:
+                            note_parts.append(s)
+                    ex_comment = (ex.get("comment") or "").strip()
+                    if ex_comment and ex_comment not in note_parts:
+                        note_parts.append(ex_comment)
+                    phrases.append([word, av, ru, "; ".join(note_parts)])
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    chunks_dir = output_dir / "chunks"
+    chunks_dir.mkdir(parents=True, exist_ok=True)
+    chunk_info: list[dict] = []
+    for i in range(0, len(phrases), PHRASE_CHUNK_SIZE):
+        chunk = phrases[i : i + PHRASE_CHUNK_SIZE]
+        idx = i // PHRASE_CHUNK_SIZE
+        chunk_file = chunks_dir / f"{idx}.json"
+        cj = json.dumps(chunk, ensure_ascii=False, separators=(",", ":"))
+        chunk_file.write_text(cj, encoding="utf-8")
+        chunk_hash = hashlib.md5(cj.encode("utf-8")).hexdigest()[:8]
+        chunk_info.append({"file": f"{idx}.json", "count": len(chunk), "hash": chunk_hash})
+
+    manifest = {
+        "version": "1.0.0",
+        "direction": direction,
+        "total_phrases": len(phrases),
+        "total_chunks": len(chunk_info),
+        "chunks": chunk_info,
+    }
+    (output_dir / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    print(f"Фразы ({direction}): {len(phrases)} → {output_dir} ({len(chunk_info)} чанков)")
+
+
 def build_av_ru(dictionary_path: Path, output_dir: Path) -> bool:
     print("=" * 60)
     print(f"Сборка av-ru → {output_dir}")
@@ -606,6 +679,10 @@ def main() -> None:
             ok += 1
     if ok != len(targets):
         sys.exit(1)
+
+    # /phrases — только основной сайт, TMA не нужен
+    build_phrases(dict_path, dict_name, docs_root / "data" / "phrases" / dict_name)
+
     print(f"\nГотово: {docs_root.name}/data/{dict_name} и {docs_root.name}/tma/data/{dict_name}")
 
 

@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="av">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Аварско-русский и русско-аварский словарь — dev.avar.me">
-    <meta name="keywords" content="аварский язык, русский язык, словарь, перевод, Дагестан">
+    <meta name="description" content="Поиск по фразам и примерам — аварско-русский и русско-аварский словарь, dev.avar.me">
+    <meta name="keywords" content="аварский язык, русский язык, словарь, фразы, примеры, Дагестан">
     <meta name="author" content="dev.avar.me">
 
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Аварско-русский словарь">
-    <meta property="og:description" content="Аварско-русский и русско-аварский словарь — dev.avar.me">
-    <meta property="og:url" content="https://dev.avar.me">
+    <meta property="og:title" content="Поиск по фразам — dev.avar.me">
+    <meta property="og:description" content="Полнотекстовый поиск по примерам аварско-русского и русско-аварского словаря">
+    <meta property="og:url" content="https://dev.avar.me/phrases.html">
 
-    <title>Аварско-русский словарь — dev.avar.me</title>
+    <title>Поиск по фразам — dev.avar.me</title>
 
     <!-- Google Fonts (из index.avar.me) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,10 +25,6 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <link rel="apple-touch-icon" sizes="192x192" href="favicon-192.png">
-
-    <!-- Preload critical resources -->
-    <link rel="preload" href="data/av-ru/index.words.txt?v=__ASSET_VERSION__" as="fetch" crossorigin>
-    <link rel="preload" href="data/av-ru/browse.json?v=__ASSET_VERSION__" as="fetch" crossorigin>
 </head>
 <body>
     <!-- Фоновый паттерн (из index.avar.me) -->
@@ -37,12 +33,9 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <p class="header-tag">dev.avar.me</p>
-            <h1 class="title" id="dictTitle">Аварско-русский<br><span class="dot">словарь</span></h1>
-            <div class="dict-toggle">
-                <button class="toggle-btn active" data-type="av-ru">Авар → Рус</button>
-                <button class="toggle-btn" data-type="ru-av">Рус → Авар</button>
-            </div>
+            <p class="header-tag"><a href="index.html">dev.avar.me</a></p>
+            <h1 class="title">Поиск<br><span class="dot">по фразам</span></h1>
+            <p class="phrases-subtitle">Ищет текст внутри примеров и переводов — не только заглавные слова</p>
         </header>
 
         <!-- Search Section -->
@@ -54,50 +47,50 @@
                     </svg>
                     <input
                         type="text"
-                        id="searchInput"
+                        id="phraseSearchInput"
                         class="search-input"
-                        placeholder="Введите слово для поиска…"
+                        placeholder="Слово или часть фразы…"
                         autocomplete="off"
                         autocorrect="off"
                         autocapitalize="off"
                         spellcheck="false"
                     >
-                    <button id="clearBtn" class="clear-btn" aria-label="Очистить">
+                    <button id="phraseClearBtn" class="clear-btn" aria-label="Очистить">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                     </button>
                 </div>
-
-                <!-- Suggestions Dropdown -->
-                <div id="suggestions" class="suggestions"></div>
             </div>
 
-            <!-- Search Stats -->
-            <div id="searchStats" class="search-stats"></div>
+            <div id="phraseStats" class="search-stats"></div>
         </div>
 
-        <!-- Results Section -->
-        <div id="results" class="results-section"></div>
-
-        <!-- Home: random words with glosses (как на avar.me) -->
-        <div id="randomWordsSection" class="home-samples-section">
-            <div id="homeSamples"></div>
+        <!-- Results -->
+        <div id="phraseResults" class="phrase-results">
+            <section class="phrase-section" id="sectionAvRu">
+                <h2 class="phrase-section-title">Авар → Рус</h2>
+                <div id="tableAvRu" class="phrase-table-wrap"></div>
+            </section>
+            <section class="phrase-section" id="sectionRuAv">
+                <h2 class="phrase-section-title">Рус → Авар</h2>
+                <div id="tableRuAv" class="phrase-table-wrap"></div>
+            </section>
         </div>
 
         <!-- Loading Indicator -->
-        <div id="loading" class="loading">
+        <div id="phraseLoading" class="loading">
             <div class="spinner"></div>
-            <p>Загрузка…</p>
+            <p>Загрузка фраз…</p>
         </div>
 
         <!-- Error Message -->
-        <div id="error" class="error-message"></div>
+        <div id="phraseError" class="error-message"></div>
 
         <!-- Footer -->
         <footer class="footer">
             <p>
-                <a href="phrases.html">Поиск по фразам →</a>
+                <a href="index.html">← Словарь</a>
             </p>
             <p>
                 Проект <a href="https://avar.me" target="_blank" rel="noopener">avar.me</a>
@@ -110,6 +103,6 @@
     </div>
 
     <script>window.__DICT_ASSET_V__ = "__ASSET_VERSION__";</script>
-    <script src="app.js?v=__ASSET_VERSION__" charset="utf-8"></script>
+    <script src="phrases.js?v=__ASSET_VERSION__" charset="utf-8"></script>
 </body>
 </html>

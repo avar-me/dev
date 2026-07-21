@@ -1088,9 +1088,18 @@ function initEventListeners() {
 async function init() {
     try {
         console.log('Initializing dictionary app...');
-        
+
         showLoading(true);
-        
+
+        // #dict=ru-av&word=... — ссылка извне (напр. со страницы /phrases)
+        // указывает, какой словарь открыть, до того как данные загружены.
+        const initialHash = window.location.hash.slice(1);
+        const initialParams = new URLSearchParams(initialHash);
+        const dictParam = initialParams.get('dict');
+        if (dictParam && DICT_TITLES[dictParam]) {
+            state.currentDictType = dictParam;
+        }
+
         // Load initial data
         state.wordsIndex = await loadWordsIndex(state.currentDictType);
         state.headwordsIndex = await loadHeadwordsIndex(state.currentDictType);
@@ -1098,22 +1107,26 @@ async function init() {
         state.formToHeadword = await loadFormToHeadword(state.currentDictType);
         state.browse = await loadBrowse(state.currentDictType);
         state.manifest = await loadManifest(state.currentDictType);
-        
+
         // Mark initial active toggle button
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.type === state.currentDictType);
         });
+        const initialTitle = DICT_TITLES[state.currentDictType];
+        if (initialTitle) {
+            const titleEl = document.getElementById('dictTitle');
+            if (titleEl) titleEl.innerHTML = initialTitle.h1;
+            document.title = initialTitle.doc;
+        }
 
         // Initialize event listeners
         initEventListeners();
-        
+
         showLoading(false);
-        
+
         // Check URL hash for initial word
-        const hash = window.location.hash.slice(1);
-        const params = new URLSearchParams(hash);
-        const word = params.get('word');
-        
+        const word = initialParams.get('word');
+
         if (word) {
             const searchInput = document.getElementById('searchInput');
             searchInput.value = word;
