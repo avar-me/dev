@@ -277,6 +277,10 @@ function normalizeWord(word) {
     // Include both U+04C0 (Ӏ) and U+04CF (ӏ) for compatibility
     // Added: ! (exclamation), ǀ (latin letter dental click), various other pipe-like chars
     normalized = normalized.replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ');
+    // ё печатают редко — «елка» должно находить «ёлка». Согласовано с
+    // normalize_word() в build_data.py (там же см. про порядок сортировки
+    // индекса — ё вне основного кириллического блока, U+0451, после «я»).
+    normalized = normalized.replace(/ё/g, 'е');
     return normalized;
 }
 

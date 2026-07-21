@@ -26,15 +26,16 @@ function escapeHtml(text) {
 
 /** Согласовано с normalizeWord() в app.js и normalize_word() в build_data.py. */
 function normalizeQuery(word) {
-    return word.toLowerCase().trim().replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ');
+    return word.toLowerCase().trim().replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ').replace(/ё/g, 'е');
 }
 
 /**
  * Без .trim() — сохраняет 1:1 соответствие индексов символов с исходным
  * текстом фразы, это нужно для подсветки совпадения (highlightMatch).
+ * ё->е тоже 1:1 по длине, индексы не сдвигаются.
  */
 function normalizeText(s) {
-    return s.toLowerCase().replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ');
+    return s.toLowerCase().replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ').replace(/ё/g, 'е');
 }
 
 function highlightMatch(original, normalized, queryNorm) {

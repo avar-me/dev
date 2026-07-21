@@ -35,8 +35,13 @@ def normalize_word(word: str) -> str:
     import re
 
     normalized = word.lower().strip()
-    # Согласовано с normalizeWord() в app.js (поиск и ключи чанков)
+    # Согласовано с normalizeWord() в app.js и normalizeQuery()/normalizeText()
+    # в phrases.js (поиск, ключи чанков, порядок сортировки индекса).
     normalized = re.sub(r"[1IiｌlL|!ǀӀІ]", "ӏ", normalized)
+    # ё печатают редко — «елка» должно находить «ёлка». Ё стоит вне основного
+    # кириллического блока (U+0451, после «я»), поэтому это влияет и на
+    # порядок сортировки индекса — см. create_index()/write_headwords_index().
+    normalized = normalized.replace("ё", "е")
     return normalized
 
 
@@ -398,7 +403,12 @@ def create_index(entries: dict[str, dict]) -> list[str]:
                         all_words.add(variant)
                 else:
                     all_words.add(fs)
-    words = sorted(all_words)
+    # Сортируем по normalize_word(), а не по сырому unicode-порядку: бинарный
+    # поиск во фронтенде (binarySearchPrefix/findExactWordInIndex) сравнивает
+    # normalizeWord(words[mid]), так что массив должен быть монотонен именно
+    # по этому ключу — иначе слова на «ё» (U+0451, вне основного алфавитного
+    # блока, кодовая точка после «я») не находились бы поиском по «е».
+    words = sorted(all_words, key=lambda w: (normalize_word(w), w))
     print(f"Уникальных заглавных слов: {len(entries)}")
     print(f"Строк в индексе (слова + формы): {len(words)}")
     return words
@@ -467,7 +477,7 @@ def write_index(words: list[str], output_dir: Path) -> None:
 
 def write_headwords_index(entries: dict[str, dict], output_dir: Path) -> int:
     """Только заглавные слова — для листинга по префиксу (как на avar.me)."""
-    headwords = sorted(entries.keys())
+    headwords = sorted(entries.keys(), key=lambda w: (normalize_word(w), w))
     path = output_dir / "index.headwords.txt"
     with open(path, "w", encoding="utf-8") as f:
         for word in headwords:
