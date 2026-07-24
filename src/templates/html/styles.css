@@ -391,6 +391,11 @@ a:hover {
   min-width: 6rem;
 }
 
+/* Дублирует .word-list-forms под словом — видно только на мобильных (RESPONSIVE) */
+.word-list-forms-inline {
+  display: none;
+}
+
 .word-list-gloss {
   font-family: var(--font-serif);
   color: var(--text);
@@ -968,6 +973,22 @@ a:hover {
   }
 
   .word-list-word {
+    white-space: normal;
+  }
+
+  /* Формы съедали половину ширины узкого экрана — прячем колонку,
+     показываем формы мелким текстом под словом (word-list-forms-inline). */
+  .word-list thead th:nth-child(2),
+  .word-list-forms {
+    display: none;
+  }
+
+  .word-list-forms-inline {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-muted);
     white-space: normal;
   }
 }

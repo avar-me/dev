@@ -716,9 +716,14 @@ function renderWordListTable(words, options = {}) {
     const rows = words.map(word => {
         const { g, forms } = getBrowseEntry(word);
         const formsText = formatFormsPreview(word, forms);
+        // На мобильных колонка "Формы" скрыта (styles.css) — формы показываются
+        // мелким шрифтом под словом внутри той же ячейки.
+        const formsInline = formsText
+            ? `<span class="word-list-forms-inline">${escapeHtml(formsText)}</span>`
+            : '';
         return `
             <tr class="word-list-row" data-word="${escapeHtml(word)}" tabindex="0" role="button">
-                <td class="word-list-word">${escapeHtml(word)}</td>
+                <td class="word-list-word">${escapeHtml(word)}${formsInline}</td>
                 <td class="word-list-forms">${escapeHtml(formsText)}</td>
                 <td class="word-list-gloss">${escapeHtml(g)}</td>
             </tr>
