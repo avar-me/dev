@@ -137,6 +137,23 @@ function splitStemSuffix(form, stem) {
     return null;
 }
 
+/**
+ * Разбить перевод по ";" на строки — на мобильных короткая колонка
+ * иначе превращает несколько значений в нечитаемую простыню.
+ * ";" и перенос строки переключаются CSS-медиа-запросом (см. .gloss-break,
+ * .gloss-semicolon): на десктопе — "; " как раньше, на мобильных — перенос
+ * строки вместо точки с запятой.
+ */
+function formatGlossMultiline(text) {
+    if (!text) return '';
+    return text
+        .split(';')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .map(escapeHtml)
+        .join('<span class="gloss-semicolon">; </span><br class="gloss-break">');
+}
+
 /** Перевод + помета/комментарий: основной текст и подстрочная строка. */
 function formatGlossWithNote(main, note) {
     const text = main ? (Array.isArray(main) ? main.join('; ') : String(main)) : '';
@@ -725,7 +742,7 @@ function renderWordListTable(words, options = {}) {
             <tr class="word-list-row" data-word="${escapeHtml(word)}" tabindex="0" role="button">
                 <td class="word-list-word">${escapeHtml(word)}${formsInline}</td>
                 <td class="word-list-forms">${escapeHtml(formsText)}</td>
-                <td class="word-list-gloss">${escapeHtml(g)}</td>
+                <td class="word-list-gloss">${formatGlossMultiline(g)}</td>
             </tr>
         `;
     }).join('');
