@@ -601,11 +601,13 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
             if not word:
                 continue
             senses = raw.get("senses") or raw.get("translations") or []
+            word_has_phrase = False
             for sense in senses:
                 if not isinstance(sense, dict):
                     continue
                 text = (sense.get("text") or "").strip()
                 if text:
+                    word_has_phrase = True
                     if direction == "av-ru":
                         phrases.append([word, word, text, ""])
                     else:
@@ -615,6 +617,7 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                     ru = (ex.get("ru") or "").strip()
                     if not av and not ru:
                         continue
+                    word_has_phrase = True
                     note_parts: list[str] = []
                     for lab in ex.get("labels") or []:
                         s = str(lab).strip()
@@ -624,6 +627,29 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                     if ex_comment and ex_comment not in note_parts:
                         note_parts.append(ex_comment)
                     phrases.append([word, av, ru, "; ".join(note_parts)])
+            if not word_has_phrase:
+                # Статьи без sense.text и examples («см.», масдары, формы от
+                # других слов) иначе выпадали из индекса — само слово было
+                # ненаходимо через /phrases.
+                if direction == "av-ru":
+                    phrases.append([word, word, "", ""])
+                else:
+                    phrases.append([word, "", word, ""])
+
+            # Словоформы (напр. «лагънаялъ» для «лагъна») — иначе находится
+            # только заглавная форма, а склонения/спряжения в /phrases не
+            # ищутся вовсе.
+            seen_forms = {word}
+            for f in raw.get("forms") or []:
+                f = str(f).strip()
+                if not f or f in seen_forms:
+                    continue
+                seen_forms.add(f)
+                comment = f"форма слова «{word}»"
+                if direction == "av-ru":
+                    phrases.append([word, f, "", comment])
+                else:
+                    phrases.append([word, "", f, comment])
 
     output_dir.mkdir(parents=True, exist_ok=True)
     chunks_dir = output_dir / "chunks"
