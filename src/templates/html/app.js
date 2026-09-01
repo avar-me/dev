@@ -956,6 +956,12 @@ const DICT_TITLES = {
 async function switchDictType(newType) {
     if (newType === state.currentDictType) return;
 
+    // Пока грузятся индексы нового словаря, пользователь может успеть
+    // напечатать запрос — запоминаем значение поля на старте, чтобы не
+    // затереть его безусловно после загрузки.
+    const searchInput = document.getElementById('searchInput');
+    const valueBeforeLoad = searchInput.value;
+
     try {
         showLoading(true);
 
@@ -970,9 +976,8 @@ async function switchDictType(newType) {
         state.browse = await loadBrowse(newType);
         state.manifest = await loadManifest(newType);
 
-        // Clear cache and results
+        // Clear cache
         state.chunkCache.clear();
-        clearSearchView();
 
         // Update UI
         document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -985,9 +990,17 @@ async function switchDictType(newType) {
             document.title = t.doc;
         }
 
-        // Clear search input
-        const searchInput = document.getElementById('searchInput');
-        searchInput.value = '';
+        if (searchInput.value === valueBeforeLoad) {
+            // Пользователь ничего не вводил, пока грузился новый словарь — можно сбросить строку поиска.
+            clearSearchView();
+            searchInput.value = '';
+        } else {
+            // Пользователь уже печатает новый запрос — не затираем его, а ищем в новом словаре.
+            const clearBtn = document.getElementById('clearBtn');
+            const query = searchInput.value.trim();
+            if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
+            handleSearchInput(query);
+        }
         searchInput.focus();
 
         showLoading(false);
