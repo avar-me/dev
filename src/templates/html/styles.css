@@ -112,11 +112,38 @@ a:hover {
 }
 
 /* ============================================================================
+   TOPBAR
+   ============================================================================ */
+
+.topbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 0;
+  font-size: 0.78rem;
+}
+
+.topbar a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.topbar a:hover {
+  color: var(--accent);
+}
+
+.topbar-sep {
+  color: var(--text-light);
+}
+
+/* ============================================================================
    HEADER / HERO
    ============================================================================ */
 
 .header {
-  padding: 2.5rem 1.5rem 1.25rem;
+  padding: 1.5rem 1.5rem 1.25rem;
   text-align: center;
   margin-bottom: 1.5rem;
 }
@@ -962,8 +989,13 @@ a:hover {
     padding: 0 1rem 3rem;
   }
 
+  .topbar {
+    padding: 0.85rem 1rem 0;
+    font-size: 0.74rem;
+  }
+
   .header {
-    padding: 2rem 1rem 1rem;
+    padding: 1rem 1rem 1rem;
   }
 
   .title {
@@ -1024,6 +1056,7 @@ a:hover {
 
 @media print {
   .bg-pattern,
+  .topbar,
   .header,
   .search-section,
   .footer {

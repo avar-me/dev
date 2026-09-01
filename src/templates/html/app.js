@@ -956,11 +956,7 @@ const DICT_TITLES = {
 async function switchDictType(newType) {
     if (newType === state.currentDictType) return;
 
-    // Пока грузятся индексы нового словаря, пользователь может успеть
-    // напечатать запрос — запоминаем значение поля на старте, чтобы не
-    // затереть его безусловно после загрузки.
     const searchInput = document.getElementById('searchInput');
-    const valueBeforeLoad = searchInput.value;
 
     try {
         showLoading(true);
@@ -990,16 +986,16 @@ async function switchDictType(newType) {
             document.title = t.doc;
         }
 
-        if (searchInput.value === valueBeforeLoad) {
-            // Пользователь ничего не вводил, пока грузился новый словарь — можно сбросить строку поиска.
-            clearSearchView();
-            searchInput.value = '';
-        } else {
-            // Пользователь уже печатает новый запрос — не затираем его, а ищем в новом словаре.
+        // Строка поиска могла быть заполнена и до переключения, и во время
+        // загрузки нового словаря — в обоих случаях не затираем её, а ищем
+        // введённый запрос уже в новом словаре. Чистим только пустое поле.
+        const query = searchInput.value.trim();
+        if (query) {
             const clearBtn = document.getElementById('clearBtn');
-            const query = searchInput.value.trim();
-            if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
+            if (clearBtn) clearBtn.style.display = 'block';
             handleSearchInput(query);
+        } else {
+            clearSearchView();
         }
         searchInput.focus();
 
