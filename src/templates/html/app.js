@@ -946,8 +946,8 @@ async function loadAndDisplayWord(word) {
 // ============================================================================
 
 const DICT_TITLES = {
-    'av-ru': { h1: 'Аварско-русский<br><span class="dot">словарь</span>', doc: 'Аварско-русский словарь — dev.avar.me' },
-    'ru-av': { h1: 'Русско-аварский<br><span class="dot">словарь</span>', doc: 'Русско-аварский словарь — dev.avar.me' },
+    'av-ru': { doc: 'Аварско-русский словарь — dev.avar.me' },
+    'ru-av': { doc: 'Русско-аварский словарь — dev.avar.me' },
 };
 
 /**
@@ -981,8 +981,6 @@ async function switchDictType(newType) {
         });
         const t = DICT_TITLES[newType];
         if (t) {
-            const titleEl = document.getElementById('dictTitle');
-            if (titleEl) titleEl.innerHTML = t.h1;
             document.title = t.doc;
         }
 
@@ -1149,8 +1147,6 @@ async function init() {
         });
         const initialTitle = DICT_TITLES[state.currentDictType];
         if (initialTitle) {
-            const titleEl = document.getElementById('dictTitle');
-            if (titleEl) titleEl.innerHTML = initialTitle.h1;
             document.title = initialTitle.doc;
         }
 
