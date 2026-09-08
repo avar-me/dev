@@ -117,11 +117,25 @@ a:hover {
 
 .topbar {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.5rem 0;
   font-size: 0.78rem;
+}
+
+.topbar-langs,
+.topbar-apps {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.topbar-apps {
+  gap: 0.85rem;
 }
 
 .topbar a {
@@ -136,6 +150,26 @@ a:hover {
 
 .topbar-sep {
   color: var(--text-light);
+}
+
+.topbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--text-muted);
+}
+
+.topbar-icon:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.topbar-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 /* ============================================================================
@@ -238,6 +272,32 @@ a:hover {
 
 .header-link a:hover {
   color: var(--accent);
+}
+
+.phrases-link {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.phrases-link:hover {
+  color: #7a6114;
+}
+
+.back-search-btn {
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.back-search-btn:hover {
+  color: var(--accent);
+  background: var(--bg-card);
+  text-decoration: none;
 }
 
 /* ============================================================================
@@ -988,6 +1048,15 @@ a:hover {
 .footer a:hover {
   color: var(--link-hover);
   text-decoration: underline;
+}
+
+.footer .phrases-link {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.footer .phrases-link:hover {
+  color: #7a6114;
 }
 
 /* ============================================================================
