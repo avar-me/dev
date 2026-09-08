@@ -4,6 +4,8 @@
 
 ## 2026-09-08
 
+- feat: ссылка `old` → [old.avar.me](https://old.avar.me) справа от языков (serif), крупнее языки и иконки в шапке
+- feat: Google Analytics `UA-79014041-1` (тот же счётчик, что на avar.me) на главной и `/phrases`
 - feat: профили сайта (`profile.json` + `src/profiles/`) — цвета акцента под флаги и словари `av-{lang}` / `{lang}-av` с sources.avar.me; клон меняет `id`/`host` и `CNAME`
 - feat: в шапке — языковые зеркала (ru, en, de, fr, tr, uk, be) и пиктограммы App Store, Google Play, Telegram-канала и бота [@avar_me_bot](https://t.me/avar_me_bot)
 - feat: на `/phrases` кнопка возврата к обычному поиску
