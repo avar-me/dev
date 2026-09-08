@@ -6,30 +6,35 @@
 
 `dev.avar.me` — статический сайт аварско-русского словаря. Публикуется на GitHub Pages из этого репозитория. Домен — `CNAME`.
 
-**Данные здесь не хранятся.** При сборке `build.sh` выкачивает `av-ru.jsonl` из <https://sources.avar.me/data/av-ru.jsonl>. Источник правды — репозиторий [`avar-me/sources`](https://github.com/avar-me/sources). Не коммитьте сюда jsonl, не правьте словарь в этом репозитории.
+**Данные здесь не хранятся.** При сборке `build.sh` выкачивает jsonl из sources.avar.me по именам из профиля (`av-ru` / `ru-av` здесь, в клонах — `av-en`, `av-tr`, …). Источник правды — репозиторий [`avar-me/sources`](https://github.com/avar-me/sources). Не коммитьте сюда jsonl, не правьте словарь в этом репозитории.
 
 ## Главное правило
 
-1. **В репо только исходники.** Шаблоны (`src/templates/`), скрипт сборки данных (`src/build_data.py`), скрипт сборки сайта (`build.sh`), workflow (`.github/workflows/deploy.yml`), `CNAME`, документация. **Ни единого артефакта сборки, ни единого jsonl, ни единого «обвязочного» скрипта.** Если хочется добавить файл — спросите себя, не выкинут ли его при следующем «причешем репо».
+1. **В репо только исходники.** Шаблоны (`src/templates/`), профили (`src/profiles/`, `profile.json`), скрипты сборки (`src/build_data.py`, `src/apply_profile.py`, `build.sh`), workflow (`.github/workflows/deploy.yml`), `CNAME`, документация. **Ни единого артефакта сборки, ни единого jsonl.** Если хочется добавить файл — спросите себя, не выкинут ли его при следующем «причешем репо».
 2. **`docs/` — gitignored.** Это выход `build.sh`. Никогда не коммитьте, никогда не правьте руками.
-3. **`av-ru.jsonl` — gitignored.** Скачивается в корень при сборке, в репо не лежит.
+3. **`*.jsonl` — gitignored.** Скачиваются в корень при сборке, в репо не лежат.
 4. **Правки данных** — не сюда, а в [`avar-me/sources`](https://github.com/avar-me/sources). После их пересборки workflow тут возьмет свежие данные при следующем запуске (раз в сутки по cron или `workflow_dispatch`).
 5. **Внешний вид строго как сейчас.** Шаблоны переехали из старого репозитория `dev3.avar.me` без изменений; дизайн, разметка, цвета, шрифты, поведение — те же. Любые UI-правки делайте только по явному запросу пользователя.
 
 ## Поток работы
 
 ```
-sources.avar.me/data/av-ru.jsonl
+profile.json (id=ru|en|tr|…)
             │
             ▼
-        build.sh ──► src/build_data.py ──► docs/data/av-ru/{index,chunks,manifest}
-            │                            ──► docs/tma/data/av-ru/…
-            └─► копирует src/templates/{html,tma}/* в docs/ и docs/tma/
-                и подставляет build_id вместо __ASSET_VERSION__ в docs/index.html
+sources.avar.me/data/{av-xx,xx-av}.jsonl
+            │
+            ▼
+        build.sh ──► src/build_data.py ──► docs/data/{av-xx,xx-av}/…
+            │                            ──► docs/tma/data/…
+            └─► копирует шаблоны, apply_profile.py пишет theme.css
+                и подставляет подписи / __ASSET_VERSION__
                             │
                             ▼
-                  GitHub Actions ──► GitHub Pages ──► dev.avar.me
+                  GitHub Actions ──► GitHub Pages
 ```
+
+Этот репозиторий — шаблон. Клон для другого языка: скопировать репо, в `profile.json` поставить `id` (`en`, `tr`, `fr`, `de`, `uk`, `be`) и `host`, в `CNAME` — домен. Цвета флага и имена словарей (`av-en` / `en-av`, …) берутся из `src/profiles/{id}.json`. Новый язык — новый файл в `src/profiles/`.
 
 1. Пользователь сообщает об ошибке в данных в чате [@avarme_chat](https://t.me/avarme_chat).
 2. Админ правит `data/av-ru.jsonl` в `avar-me/sources` и пушит.
@@ -46,11 +51,12 @@ sources.avar.me/data/av-ru.jsonl
 
 | Хочется поменять | Куда лезть |
 |------------------|-----------|
-| Опечатка / перевод / пример | НЕ сюда. В `avar-me/sources`, `data/av-ru.jsonl`. |
-| Внешний вид | `src/templates/html/styles.css` (или `tma/styles.css`). |
+| Опечатка / перевод / пример | НЕ сюда. В `avar-me/sources`, `data/av-*.jsonl`. |
+| Язык клона / цвета / имена словарей | `profile.json` + `src/profiles/{id}.json`. |
+| Внешний вид (общее) | `src/templates/html/styles.css` (или `tma/styles.css`). |
 | Поиск / саджесты / рандомайзер | `src/templates/html/app.js`. |
 | Логика разбиения данных на чанки | `src/build_data.py`. |
-| Доменное имя | `CNAME`. |
+| Доменное имя | `CNAME` и поле `host` в `profile.json`. |
 | Деплой / cron расписание | `.github/workflows/deploy.yml`. |
 
 ## Стиль кода

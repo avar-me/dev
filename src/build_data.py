@@ -579,14 +579,23 @@ def write_manifest(
     print(f"Manifest: {manifest_file}")
 
 
+def _direction_parts(direction: str) -> tuple[str, bool]:
+    """('ru', True) для av-ru; ('en', False) для en-av."""
+    left, right = direction.split("-", 1)
+    av_first = left == "av"
+    target = right if av_first else left
+    return target, av_first
+
+
 def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> None:
     """Полнотекстовый индекс фраз для /phrases: examples + пары word:sense.text.
 
-    direction: "av-ru" — word аварский, sense.text русский;
-               "ru-av" — word русский, sense.text аварский.
-    Каждая фраза — [word, av, ru, comment] (comment: пометы примера + его comment,
-    объединённые через "; "; пустая строка если нет).
+    direction: "av-xx" — word аварский, sense.text на языке xx;
+               "xx-av" — word на xx, sense.text аварский.
+    Каждая фраза — [word, av, xx, comment]. В examples ищется поле языка
+    (en/tr/…) и запасной ключ ru — так в источниках часто лежит второй язык.
     """
+    target, av_first = _direction_parts(direction)
     phrases: list[list[str]] = []
     with open(dictionary_path, encoding="utf-8") as f:
         for line in f:
@@ -608,14 +617,14 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                 text = (sense.get("text") or "").strip()
                 if text:
                     word_has_phrase = True
-                    if direction == "av-ru":
+                    if av_first:
                         phrases.append([word, word, text, ""])
                     else:
                         phrases.append([word, text, word, ""])
                 for ex in sense.get("examples") or []:
                     av = (ex.get("av") or "").strip()
-                    ru = (ex.get("ru") or "").strip()
-                    if not av and not ru:
+                    xx = (ex.get(target) or ex.get("ru") or "").strip()
+                    if not av and not xx:
                         continue
                     word_has_phrase = True
                     note_parts: list[str] = []
@@ -626,12 +635,12 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                     ex_comment = (ex.get("comment") or "").strip()
                     if ex_comment and ex_comment not in note_parts:
                         note_parts.append(ex_comment)
-                    phrases.append([word, av, ru, "; ".join(note_parts)])
+                    phrases.append([word, av, xx, "; ".join(note_parts)])
             if not word_has_phrase:
                 # Статьи без sense.text и examples («см.», масдары, формы от
                 # других слов) иначе выпадали из индекса — само слово было
                 # ненаходимо через /phrases.
-                if direction == "av-ru":
+                if av_first:
                     phrases.append([word, word, "", ""])
                 else:
                     phrases.append([word, "", word, ""])
@@ -646,7 +655,7 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                     continue
                 seen_forms.add(f)
                 comment = f"форма слова «{word}»"
-                if direction == "av-ru":
+                if av_first:
                     phrases.append([word, f, "", comment])
                 else:
                     phrases.append([word, "", f, comment])
@@ -679,7 +688,7 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
 
 def build_av_ru(dictionary_path: Path, output_dir: Path) -> bool:
     print("=" * 60)
-    print(f"Сборка av-ru → {output_dir}")
+    print(f"Сборка {output_dir.name} → {output_dir}")
     print("=" * 60)
     entries, form_map = load_dictionary(dictionary_path)
     if not entries:

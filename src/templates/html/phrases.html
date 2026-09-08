@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="__HTML_LANG__">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Поиск по фразам и примерам — аварско-русский и русско-аварский словарь, dev.avar.me">
-    <meta name="keywords" content="аварский язык, русский язык, словарь, фразы, примеры, Дагестан">
-    <meta name="author" content="dev.avar.me">
+    <meta name="description" content="Поиск по фразам и примерам — __SITE_DESC__, __SITE_HOST__">
+    <meta name="keywords" content="аварский язык, словарь, фразы, примеры, Дагестан">
+    <meta name="author" content="__SITE_HOST__">
 
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Поиск по фразам — dev.avar.me">
-    <meta property="og:description" content="Полнотекстовый поиск по примерам аварско-русского и русско-аварского словаря">
-    <meta property="og:url" content="https://dev.avar.me/phrases.html">
+    <meta property="og:title" content="Поиск по фразам — __SITE_HOST__">
+    <meta property="og:description" content="Полнотекстовый поиск по примерам — __SITE_DESC__">
+    <meta property="og:url" content="https://__SITE_HOST__/phrases.html">
 
-    <title>Поиск по фразам — dev.avar.me</title>
+    <title>Поиск по фразам — __SITE_HOST__</title>
 
     <!-- Google Fonts (из index.avar.me) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__">
+    <link rel="stylesheet" href="theme.css?v=__ASSET_VERSION__">
 
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -34,19 +35,19 @@
         <!-- Topbar: языки, приложения, канал и бот -->
         <div class="topbar">
             <nav class="topbar-langs" aria-label="Языковые версии">
-                <a href="https://ru.avar.me">ru</a>
+                <a href="https://ru.avar.me" data-lang="ru">ru</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://en.avar.me">en</a>
+                <a href="https://en.avar.me" data-lang="en">en</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://de.avar.me">de</a>
+                <a href="https://de.avar.me" data-lang="de">de</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://fr.avar.me">fr</a>
+                <a href="https://fr.avar.me" data-lang="fr">fr</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://tr.avar.me">tr</a>
+                <a href="https://tr.avar.me" data-lang="tr">tr</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://uk.avar.me">uk</a>
+                <a href="https://uk.avar.me" data-lang="uk">uk</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://be.avar.me">be</a>
+                <a href="https://be.avar.me" data-lang="be">be</a>
             </nav>
             <nav class="topbar-apps" aria-label="Приложения и Telegram">
                 <a class="topbar-icon" href="https://apps.apple.com/app/id6782280983" target="_blank" rel="noopener" title="App Store" aria-label="App Store">
@@ -105,11 +106,11 @@
         <!-- Results -->
         <div id="phraseResults" class="phrase-results">
             <section class="phrase-section" id="sectionAvRu">
-                <h2 class="phrase-section-title">Авар → Рус</h2>
+                <h2 class="phrase-section-title">__LABEL_AV_XX__</h2>
                 <div id="tableAvRu" class="phrase-table-wrap"></div>
             </section>
             <section class="phrase-section" id="sectionRuAv">
-                <h2 class="phrase-section-title">Рус → Авар</h2>
+                <h2 class="phrase-section-title">__LABEL_XX_AV__</h2>
                 <div id="tableRuAv" class="phrase-table-wrap"></div>
             </section>
         </div>
@@ -138,7 +139,7 @@
         </footer>
     </div>
 
-    <script>window.__DICT_ASSET_V__ = "__ASSET_VERSION__";</script>
+    <script>window.__DICT_ASSET_V__ = "__ASSET_VERSION__"; window.__SITE__ = __SITE_JSON__;</script>
     <script src="phrases.js?v=__ASSET_VERSION__" charset="utf-8"></script>
 </body>
 </html>

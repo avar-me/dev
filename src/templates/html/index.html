@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="av">
+<html lang="__HTML_LANG__">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Аварско-русский и русско-аварский словарь — dev.avar.me">
-    <meta name="keywords" content="аварский язык, русский язык, словарь, перевод, Дагестан">
-    <meta name="author" content="dev.avar.me">
+    <meta name="description" content="__SITE_DESC__ — __SITE_HOST__">
+    <meta name="keywords" content="аварский язык, словарь, перевод, Дагестан">
+    <meta name="author" content="__SITE_HOST__">
 
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Аварско-русский словарь">
-    <meta property="og:description" content="Аварско-русский и русско-аварский словарь — dev.avar.me">
-    <meta property="og:url" content="https://dev.avar.me">
+    <meta property="og:title" content="__SITE_TITLE__">
+    <meta property="og:description" content="__SITE_DESC__ — __SITE_HOST__">
+    <meta property="og:url" content="https://__SITE_HOST__">
 
-    <title>Аварско-русский словарь — dev.avar.me</title>
+    <title>__SITE_TITLE__ — __SITE_HOST__</title>
 
     <!-- Google Fonts (из index.avar.me) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,14 +21,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__">
+    <link rel="stylesheet" href="theme.css?v=__ASSET_VERSION__">
 
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <link rel="apple-touch-icon" sizes="192x192" href="favicon-192.png">
 
     <!-- Preload critical resources -->
-    <link rel="preload" href="data/av-ru/index.words.txt?v=__ASSET_VERSION__" as="fetch" crossorigin>
-    <link rel="preload" href="data/av-ru/browse.json?v=__ASSET_VERSION__" as="fetch" crossorigin>
+    <link rel="preload" href="data/__DICT_AV__/index.words.txt?v=__ASSET_VERSION__" as="fetch" crossorigin>
+    <link rel="preload" href="data/__DICT_AV__/browse.json?v=__ASSET_VERSION__" as="fetch" crossorigin>
 </head>
 <body>
     <!-- Фоновый паттерн (из index.avar.me) -->
@@ -38,19 +39,19 @@
         <!-- Topbar: языки, приложения, канал и бот -->
         <div class="topbar">
             <nav class="topbar-langs" aria-label="Языковые версии">
-                <a href="https://ru.avar.me">ru</a>
+                <a href="https://ru.avar.me" data-lang="ru">ru</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://en.avar.me">en</a>
+                <a href="https://en.avar.me" data-lang="en">en</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://de.avar.me">de</a>
+                <a href="https://de.avar.me" data-lang="de">de</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://fr.avar.me">fr</a>
+                <a href="https://fr.avar.me" data-lang="fr">fr</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://tr.avar.me">tr</a>
+                <a href="https://tr.avar.me" data-lang="tr">tr</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://uk.avar.me">uk</a>
+                <a href="https://uk.avar.me" data-lang="uk">uk</a>
                 <span class="topbar-sep" aria-hidden="true">·</span>
-                <a href="https://be.avar.me">be</a>
+                <a href="https://be.avar.me" data-lang="be">be</a>
             </nav>
             <nav class="topbar-apps" aria-label="Приложения и Telegram">
                 <a class="topbar-icon" href="https://apps.apple.com/app/id6782280983" target="_blank" rel="noopener" title="App Store" aria-label="App Store">
@@ -70,10 +71,10 @@
 
         <!-- Header -->
         <header class="header">
-            <p class="header-tag">Аварский словарь <a href="https://avar.me" target="_blank" rel="noopener">avar.me</a></p>
+            <p class="header-tag">__SITE_TAG__ <a href="https://avar.me" target="_blank" rel="noopener">avar.me</a></p>
             <div class="dict-toggle">
-                <button class="toggle-btn active" data-type="av-ru">Авар → Рус</button>
-                <button class="toggle-btn" data-type="ru-av">Рус → Авар</button>
+                <button class="toggle-btn active" data-type="__DICT_AV__">__LABEL_AV_XX__</button>
+                <button class="toggle-btn" data-type="__DICT_XX__">__LABEL_XX_AV__</button>
             </div>
             <p class="header-link"><a class="phrases-link" href="phrases.html">Поиск по фразам →</a></p>
         </header>
@@ -142,7 +143,7 @@
         </footer>
     </div>
 
-    <script>window.__DICT_ASSET_V__ = "__ASSET_VERSION__";</script>
+    <script>window.__DICT_ASSET_V__ = "__ASSET_VERSION__"; window.__SITE__ = __SITE_JSON__;</script>
     <script src="app.js?v=__ASSET_VERSION__" charset="utf-8"></script>
 </body>
 </html>

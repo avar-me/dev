@@ -4,6 +4,7 @@
 
 ## 2026-09-08
 
+- feat: профили сайта (`profile.json` + `src/profiles/`) — цвета акцента под флаги и словари `av-{lang}` / `{lang}-av` с sources.avar.me; клон меняет `id`/`host` и `CNAME`
 - feat: в шапке — языковые зеркала (ru, en, de, fr, tr, uk, be) и пиктограммы App Store, Google Play, Telegram-канала и бота [@avar_me_bot](https://t.me/avar_me_bot)
 - feat: на `/phrases` кнопка возврата к обычному поиску
 - tweak: ссылка «Поиск по фразам» чуть ярче (акцентный цвет)

@@ -2,7 +2,9 @@
 
 Аварско-русский словарь — статический сайт, публикуется через GitHub Pages: <https://dev.avar.me>.
 
-Данные не хранятся в этом репозитории. При сборке выкачивается `av-ru.jsonl` из [sources.avar.me](https://sources.avar.me) — это единственный источник правды. Любые правки данных делайте в репозитории [`avar-me/sources`](https://github.com/avar-me/sources); после его пересборки можно дернуть workflow здесь (раз в сутки запускается автоматически) и сайт подтянет свежие данные.
+Данные не хранятся в этом репозитории. При сборке выкачиваются jsonl из [sources.avar.me](https://sources.avar.me) по профилю (`av-ru` / `ru-av` здесь) — это единственный источник правды. Любые правки данных делайте в репозитории [`avar-me/sources`](https://github.com/avar-me/sources); после его пересборки можно дернуть workflow здесь (раз в сутки запускается автоматически) и сайт подтянет свежие данные.
+
+Репозиторий можно клонировать для других пар (`en`, `tr`, `fr`, `de`, `uk`, `be`): в `profile.json` меняются `id` и `host`, в `CNAME` — домен. Цвета (акцент под флаг) и имена словарей (`av-en`, `en-av`, …) лежат в `src/profiles/`.
 
 ## Структура
 
@@ -10,8 +12,11 @@
 .
 ├── .github/workflows/deploy.yml   # Сборка и публикация на Pages
 ├── CNAME                          # dev.avar.me
+├── profile.json                   # id языка + host этого клона
 ├── build.sh                       # Локальная сборка
 └── src/
+    ├── profiles/                  # Цвета и подписи: ru, en, de, fr, tr, uk, be
+    ├── apply_profile.py           # Тема, подписи, cache-bust
     ├── build_data.py              # JSONL → chunks/, browse.json, индексы, манифест
     └── templates/
         ├── html/                  # index.html, app.js, styles.css — основной сайт
@@ -28,12 +33,12 @@ python3 -m http.server -d docs 8000
 # открыть http://localhost:8000
 ```
 
-`build.sh` скачивает `av-ru.jsonl` из sources.avar.me, кладет шаблоны в `docs/`, запускает `src/build_data.py`, проставляет cache-bust по `build_id` манифеста.
+`build.sh` читает `profile.json`, скачивает `{av-xx,xx-av}.jsonl` из sources.avar.me, кладет шаблоны в `docs/`, запускает `src/build_data.py`, пишет `theme.css` и проставляет подписи / cache-bust.
 
-URL источника можно переопределить:
+Базовый URL источников можно переопределить:
 
 ```bash
-JSONL_URL=https://example.com/foo.jsonl ./build.sh
+SOURCES_BASE=https://example.com/data ./build.sh
 ```
 
 ## Деплой
@@ -44,11 +49,12 @@ JSONL_URL=https://example.com/foo.jsonl ./build.sh
 
 | Хочется поменять | Куда лезть |
 |------------------|-----------|
-| Опечатку / перевод / пример | [`avar-me/sources`](https://github.com/avar-me/sources), `data/av-ru.jsonl` |
+| Опечатку / перевод / пример | [`avar-me/sources`](https://github.com/avar-me/sources), `data/av-*.jsonl` |
+| Язык клона / цвета | `profile.json`, `src/profiles/{id}.json` |
 | Внешний вид сайта | `src/templates/html/styles.css` (или `tma/styles.css`) |
 | Логику поиска / саджестов / рандомайзера | `src/templates/html/app.js` |
 | Сборку данных | `src/build_data.py` |
-| Доменное имя | `CNAME` |
+| Доменное имя | `CNAME` и `host` в `profile.json` |
 | Деплой | `.github/workflows/deploy.yml` |
 
 Никогда не правьте `docs/` руками — оно перезаписывается при каждой сборке.

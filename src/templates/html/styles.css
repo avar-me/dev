@@ -18,8 +18,10 @@
   --text-light:     #8a9099;
 
   --accent:         #9a7b1a;
+  --accent-hover:   #7a6114;
   --accent-glow:    rgba(154, 123, 26, 0.25);
   --accent-light:   rgba(154, 123, 26, 0.12);
+  --bg-wash:        rgba(201, 162, 39, 0.14);
 
   --link:           #1a5f8a;
   --link-hover:     #0d4a6e;
@@ -76,7 +78,7 @@ body {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 162, 39, 0.14), transparent),
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--bg-wash), transparent),
     radial-gradient(ellipse 60% 40% at 100% 80%, rgba(94, 140, 180, 0.08), transparent),
     linear-gradient(180deg, #faf8f4 0%, var(--bg-deep) 50%);
   pointer-events: none;
@@ -150,6 +152,11 @@ a:hover {
 
 .topbar-sep {
   color: var(--text-light);
+}
+
+.topbar-langs a.is-current {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .topbar-icon {
@@ -280,7 +287,7 @@ a:hover {
 }
 
 .phrases-link:hover {
-  color: #7a6114;
+  color: var(--accent-hover);
 }
 
 .back-search-btn {
@@ -1056,7 +1063,7 @@ a:hover {
 }
 
 .footer .phrases-link:hover {
-  color: #7a6114;
+  color: var(--accent-hover);
 }
 
 /* ============================================================================

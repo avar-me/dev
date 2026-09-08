@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Аварско-русский словарь — dev3 pipeline">
+    <meta name="description" content="__SITE_DESC__">
     
-    <title>Аварско-русский словарь</title>
+    <title>__SITE_TITLE__</title>
     
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -18,7 +18,7 @@
         <header class="header">
             <div class="header-top">
                 <div class="header-title-section">
-                    <h1 class="title">Аварско-русский словарь</h1>
+                    <h1 class="title">__SITE_TITLE__</h1>
                 </div>
                 
                 <!-- Home Button -->
@@ -83,6 +83,7 @@
         <div id="error" class="error-message"></div>
     </div>
 
+    <script>window.__SITE__ = __SITE_JSON__;</script>
     <script src="app.js?v=202604131200"></script>
 </body>
 </html>

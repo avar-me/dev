@@ -75,7 +75,7 @@ const CONFIG = {
     MAX_SUGGESTIONS: 20,
     DEBOUNCE_DELAY: 150,
     CHUNK_CACHE_SIZE: 50,
-    DEFAULT_DICT_TYPE: 'av-ru'
+    DEFAULT_DICT_TYPE: (typeof window !== 'undefined' && window.__SITE__ && window.__SITE__.dicts && window.__SITE__.dicts[0].id) || 'av-ru'
 };
 
 // ============================================================================

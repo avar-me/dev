@@ -3,6 +3,21 @@
  * Полнотекстовый поиск по examples и sense.text обоих словарей (av-ru, ru-av).
  */
 
+function getSite() {
+    const s = typeof window !== 'undefined' ? window.__SITE__ : null;
+    if (s && Array.isArray(s.dicts) && s.dicts.length >= 2) return s;
+    return {
+        id: 'ru',
+        host: 'dev.avar.me',
+        dicts: [
+            { id: 'av-ru', label: 'Авар → Рус', shortAv: 'Авар', shortXx: 'Рус', avFirst: true },
+            { id: 'ru-av', label: 'Рус → Авар', shortAv: 'Авар', shortXx: 'Рус', avFirst: false },
+        ],
+    };
+}
+
+const SITE = getSite();
+
 const CONFIG = {
     MIN_QUERY_LEN: 2,
     DEBOUNCE_DELAY: 200,
@@ -59,8 +74,8 @@ function debounce(func, delay) {
 }
 
 const state = {
-    avRu: null,
-    ruAv: null,
+    fwd: null,
+    rev: null,
 };
 
 /**
@@ -149,6 +164,11 @@ function renderSection(containerId, index, dict, queryNorm, reversed, leftLabel,
     container.innerHTML = `<p class="phrase-table-caption">${caption}</p>${header}${renderRows(results, dict, queryNorm, reversed)}`;
 }
 
+function sectionLabels(dict) {
+    if (dict.avFirst) return [dict.shortAv, dict.shortXx, false];
+    return [dict.shortXx, dict.shortAv, true];
+}
+
 function renderEmptyState() {
     document.getElementById('tableAvRu').innerHTML = '';
     document.getElementById('tableRuAv').innerHTML = '';
@@ -172,8 +192,11 @@ function runSearch(query) {
     }
     statsEl.textContent = '';
     const queryNorm = normalizeQuery(query);
-    renderSection('tableAvRu', state.avRu, 'av-ru', queryNorm, false, 'Авар', 'Рус');
-    renderSection('tableRuAv', state.ruAv, 'ru-av', queryNorm, true, 'Рус', 'Авар');
+    const [fwd, rev] = SITE.dicts;
+    const [fwdL, fwdR, fwdRev] = sectionLabels(fwd);
+    const [revL, revR, revRev] = sectionLabels(rev);
+    renderSection('tableAvRu', state.fwd, fwd.id, queryNorm, fwdRev, fwdL, fwdR);
+    renderSection('tableRuAv', state.rev, rev.id, queryNorm, revRev, revL, revR);
 }
 
 const handleInput = debounce((query) => {
@@ -206,10 +229,14 @@ async function init() {
 
     showLoading(true);
     try {
-        const [avRu, ruAv] = await Promise.all([loadPhraseSet('av-ru'), loadPhraseSet('ru-av')]);
-        state.avRu = avRu;
-        state.ruAv = ruAv;
-        console.log(`Phrases loaded: av-ru=${avRu.length}, ru-av=${ruAv.length}`);
+        const [fwd, rev] = SITE.dicts;
+        const [fwdIndex, revIndex] = await Promise.all([
+            loadPhraseSet(fwd.id),
+            loadPhraseSet(rev.id),
+        ]);
+        state.fwd = fwdIndex;
+        state.rev = revIndex;
+        console.log(`Phrases loaded: ${fwd.id}=${fwdIndex.length}, ${rev.id}=${revIndex.length}`);
     } catch (error) {
         console.error('Error loading phrases:', error);
         showError('Не удалось загрузить данные для поиска по фразам');

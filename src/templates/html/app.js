@@ -7,6 +7,21 @@
 // CONFIGURATION
 // ============================================================================
 
+function getSite() {
+    const s = typeof window !== 'undefined' ? window.__SITE__ : null;
+    if (s && Array.isArray(s.dicts) && s.dicts.length >= 2) return s;
+    return {
+        id: 'ru',
+        host: 'dev.avar.me',
+        dicts: [
+            { id: 'av-ru', label: 'Авар → Рус', title: 'Аварско-русский словарь — dev.avar.me', shortAv: 'Авар', shortXx: 'Рус', avFirst: true },
+            { id: 'ru-av', label: 'Рус → Авар', title: 'Русско-аварский словарь — dev.avar.me', shortAv: 'Авар', shortXx: 'Рус', avFirst: false },
+        ],
+    };
+}
+
+const SITE = getSite();
+
 const CONFIG = {
     MAX_SUGGESTIONS: 20,
     MAX_PREFIX_LIST: 150,
@@ -14,7 +29,7 @@ const CONFIG = {
     HOME_SAMPLES: 14,
     DEBOUNCE_DELAY: 150,
     CHUNK_CACHE_SIZE: 50,
-    DEFAULT_DICT_TYPE: 'av-ru'
+    DEFAULT_DICT_TYPE: SITE.dicts[0].id
 };
 
 /** Подставляется при сборке (index.html); сбрасывает кэш Cloudflare для data/*. */
@@ -945,10 +960,9 @@ async function loadAndDisplayWord(word) {
 // DICTIONARY TYPE SWITCHING
 // ============================================================================
 
-const DICT_TITLES = {
-    'av-ru': { doc: 'Аварско-русский словарь — dev.avar.me' },
-    'ru-av': { doc: 'Русско-аварский словарь — dev.avar.me' },
-};
+const DICT_TITLES = Object.fromEntries(
+    SITE.dicts.map((d) => [d.id, { doc: d.title }])
+);
 
 /**
  * Switch dictionary type (av-ru / ru-av)
