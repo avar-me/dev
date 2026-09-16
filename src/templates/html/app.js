@@ -599,6 +599,14 @@ function renderWordCard(wordData) {
             .join(' ');
         html += '</div>';
     }
+    if (wordData.spelling_forms && wordData.spelling_forms.length > 0) {
+        html += '<div class="word-spelling-forms">';
+        html += `<span class="forms-label">${escapeHtml(SITE.ui.spellingForms)}:</span> `;
+        html += wordData.spelling_forms
+            .map(form => `<span class="form-chip lookup-link" data-word="${escapeHtml(form)}">${escapeHtml(form)}</span>`)
+            .join(' ');
+        html += '</div>';
+    }
     html += `</div>`;
 
     // Process results

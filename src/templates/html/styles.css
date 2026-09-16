@@ -639,6 +639,17 @@ a:hover {
   cursor: pointer;
 }
 
+.word-spelling-forms {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.word-spelling-forms .forms-label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 /* ============================================================================
    PHRASES PAGE (/phrases)
    ============================================================================ */

@@ -266,6 +266,14 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
     gender_forms = [
         str(f).strip() for f in (raw.get("gender_forms") or []) if f and str(f).strip()
     ]
+    # Другие варианты написания этого слова (spelling_forms включает само word
+    # первым элементом — на странице показываем только остальные, чтобы было
+    # видно, почему поиск по варианту привёл на эту статью).
+    spelling_forms = [
+        str(f).strip()
+        for f in (raw.get("spelling_forms") or [])
+        if f and str(f).strip() and str(f).strip() != word
+    ]
     entry_labels = _filter_display_labels(list(raw.get("labels") or []))
 
     translations = raw.get("senses") or raw.get("translations") or []
@@ -341,6 +349,8 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
         entry["exclamation"] = excl
     if gender_forms:
         entry["gender_forms"] = gender_forms
+    if spelling_forms:
+        entry["spelling_forms"] = spelling_forms
     return entry
 
 
@@ -377,6 +387,13 @@ def merge_site_entries(a: dict, b: dict) -> dict:
                 gf_merged.append(x)
     if gf_merged:
         out["gender_forms"] = gf_merged
+    sf_merged: list[str] = []
+    for src in (a, b):
+        for x in src.get("spelling_forms") or []:
+            if x and x not in sf_merged:
+                sf_merged.append(x)
+    if sf_merged:
+        out["spelling_forms"] = sf_merged
     for key in ("stress", "stem", "exclamation"):
         if a.get(key) is not None:
             out[key] = a[key]
