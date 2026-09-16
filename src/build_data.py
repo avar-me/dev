@@ -408,16 +408,19 @@ def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, dict], dict
             if w in entries:
                 duplicates[w].append(str(line_num))
                 entries[w] = merge_site_entries(entries[w], conv)
-                for form in conv.get("forms") or []:
-                    _register_form_variants(form_to_word, form, w)
-                for form in conv.get("gender_forms") or []:
-                    _register_form_variants(form_to_word, form, w)
             else:
                 entries[w] = conv
-                for form in conv.get("forms") or []:
-                    _register_form_variants(form_to_word, form, w)
-                for form in conv.get("gender_forms") or []:
-                    _register_form_variants(form_to_word, form, w)
+            for form in conv.get("forms") or []:
+                _register_form_variants(form_to_word, form, w)
+            for form in conv.get("gender_forms") or []:
+                _register_form_variants(form_to_word, form, w)
+            # spelling_forms — варианты написания одной лексемы (первый элемент —
+            # текущее word). Вариант может иметь собственную статью — тогда её
+            # не перекрываем (см. stripped ниже), иначе ведём на текущую word.
+            for variant in raw.get("spelling_forms") or []:
+                variant = str(variant).strip()
+                if variant and variant != w:
+                    _register_form_variants(form_to_word, variant, w)
 
     # Форма может быть и отдельной статьёй (род. пад. от, омоним) — не перекрывать lemma.
     stripped = [f for f in form_to_word if f in entries]
@@ -431,7 +434,7 @@ def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, dict], dict
     return entries, form_to_word
 
 
-def create_index(entries: dict[str, dict]) -> list[str]:
+def create_index(entries: dict[str, dict], form_to_word_map: dict[str, str] | None = None) -> list[str]:
     all_words: set[str] = set(entries.keys())
     for word, entry in entries.items():
         for form in (entry.get("forms") or []) + (entry.get("gender_forms") or []):
@@ -442,6 +445,10 @@ def create_index(entries: dict[str, dict]) -> list[str]:
                         all_words.add(variant)
                 else:
                     all_words.add(fs)
+    # form_to_word_map включает и словоформы, и варианты написания
+    # (spelling_forms) без собственной статьи — они должны находиться поиском.
+    if form_to_word_map:
+        all_words.update(form_to_word_map.keys())
     # Сортируем по normalize_word(), а не по сырому unicode-порядку: бинарный
     # поиск во фронтенде (binarySearchPrefix/findExactWordInIndex) сравнивает
     # normalizeWord(words[mid]), так что массив должен быть монотонен именно
@@ -719,6 +726,19 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                 else:
                     phrases.append([word, "", f, comment])
 
+            # Варианты написания (spelling_forms) без собственной статьи —
+            # иначе «шолк» не находился бы в /phrases, только «шёлк».
+            for variant in raw.get("spelling_forms") or []:
+                variant = str(variant).strip()
+                if not variant or variant in seen_forms:
+                    continue
+                seen_forms.add(variant)
+                comment = f"вариант написания слова «{word}»"
+                if av_first:
+                    phrases.append([word, variant, "", comment])
+                else:
+                    phrases.append([word, "", variant, comment])
+
     output_dir.mkdir(parents=True, exist_ok=True)
     chunks_dir = output_dir / "chunks"
     chunks_dir.mkdir(parents=True, exist_ok=True)
@@ -753,7 +773,7 @@ def build_av_ru(dictionary_path: Path, output_dir: Path, lang: str = "ru") -> bo
     if not entries:
         print("Нет записей.", file=sys.stderr)
         return False
-    words = create_index(entries)
+    words = create_index(entries, form_map)
     chunks = split_into_chunks(entries, words, form_map)
     output_dir.mkdir(parents=True, exist_ok=True)
     write_index(words, output_dir)
