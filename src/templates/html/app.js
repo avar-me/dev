@@ -154,7 +154,7 @@ function formatWordWithStress(word, stress, applyStress = true) {
     let html = '';
     for (let i = 0; i < chars.length; i++) {
         if (i === si) {
-            html += `<span class="stress-vowel">${escapeHtml(chars[i])}</span>`;
+            html += `<span class="stress-vowel">${escapeHtml(chars[i])}́</span>`;
         } else {
             html += escapeHtml(chars[i]);
         }
@@ -223,7 +223,7 @@ function formatPartWithStress(part, offset, stressIdx) {
     let html = '';
     for (let i = 0; i < chars.length; i++) {
         if (offset + i === stressIdx) {
-            html += `<span class="stress-vowel">${escapeHtml(chars[i])}</span>`;
+            html += `<span class="stress-vowel">${escapeHtml(chars[i])}́</span>`;
         } else {
             html += escapeHtml(chars[i]);
         }
