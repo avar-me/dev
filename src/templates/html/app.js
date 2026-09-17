@@ -216,13 +216,31 @@ function exampleRuParts(ex) {
     return { ru, note: null };
 }
 
+/** Часть слова (стем или суффикс) с ударной гласной по её позиции в целом слове. */
+function formatPartWithStress(part, offset, stressIdx) {
+    if (stressIdx < 0) return escapeHtml(part);
+    const chars = [...part];
+    let html = '';
+    for (let i = 0; i < chars.length; i++) {
+        if (offset + i === stressIdx) {
+            html += `<span class="stress-vowel">${escapeHtml(chars[i])}</span>`;
+        } else {
+            html += escapeHtml(chars[i]);
+        }
+    }
+    return html;
+}
+
 function formatFormDisplay(form, headword, stem, stress) {
     const showStress = headword && normalizeWord(form) === normalizeWord(headword);
     const parts = splitStemSuffix(form, stem);
     if (parts) {
+        // Индекс ударной гласной считаем по всему слову — она может попасть
+        // и на суффикс (напр. стем "б" + суффикс "ахьи" с ударением на 2-й букве).
+        const si = showStress ? stressVowelIndex(form, stress) : -1;
         return (
-            `<span class="form-stem">${formatWordWithStress(parts.stem, stress, showStress)}</span>` +
-            `<span class="form-suffix">${escapeHtml(parts.suffix)}</span>`
+            `<span class="form-stem">${formatPartWithStress(parts.stem, 0, si)}</span>` +
+            `<span class="form-suffix">${formatPartWithStress(parts.suffix, parts.stem.length, si)}</span>`
         );
     }
     return formatWordWithStress(form, stress, showStress);
@@ -582,7 +600,7 @@ function renderWordCard(wordData) {
     // Header
     html += `<div class="word-header">`;
     html += `<div class="word-title-row">`;
-    html += `<h2 class="word-title">${escapeHtml(wordData.word)}</h2>`;
+    html += `<h2 class="word-title">${formatWordWithStress(wordData.word, wordData.stress)}</h2>`;
     if (wordData.exclamation) {
         html += `<span class="word-excl" title="${escapeHtml(SITE.ui.exclamation)}">${escapeHtml(wordData.exclamation)}</span>`;
     }
@@ -644,7 +662,7 @@ function renderWordCard(wordData) {
                 html += result.forms
                     .map(form => {
                         const inner = formatFormDisplay(
-                            form, wordData.word, wordData.stem, wordData.stress
+                            form, wordData.word, result.stem, result.stress
                         );
                         return `<span class="form-chip">${inner}</span>`;
                     })

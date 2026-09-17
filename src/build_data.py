@@ -301,6 +301,20 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
     if see:
         results[0]["lookup"] = see
 
+    # stress/stem относятся к этой конкретной строке jsonl (одному омониму),
+    # а не к слову в целом — у другого омонима того же word может быть
+    # другое ударение (напр. масдар «бахьи» ударение на 2-й букве, но
+    # существительное «бахьи» — на 5-й). Кладём их на results[0] вместе
+    # с formsʼами этой же строки, чтобы фронтенд не путал ударения омонимов.
+    stress = raw.get("stress")
+    stress_int: int | None = None
+    if stress is not None:
+        try:
+            stress_int = int(stress)
+        except (TypeError, ValueError):
+            pass
+    stem = (raw.get("stem") or "").strip()
+
     if forms and results:
         cur = list(results[0].get("forms") or [])
         merged_forms = list(forms)
@@ -315,6 +329,11 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
             cur = list(results[0].get("forms") or [])
             if fr not in cur:
                 results[0]["forms"] = [fr] + cur
+    if results and results[0].get("forms"):
+        if stress_int is not None:
+            results[0]["stress"] = stress_int
+        if stem:
+            results[0]["stem"] = stem
 
     parts = [word]
     if raw.get("word_raw"):
@@ -332,15 +351,10 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
         "word_forms": raw.get("forms_raw"),
         "page": raw.get("page"),
     }
-    # stress: позиция ударной гласной (1-based) или номер гласной в слове
-    stress = raw.get("stress")
-    if stress is not None:
-        try:
-            entry["stress"] = int(stress)
-        except (TypeError, ValueError):
-            pass
-    # stem: основа слова
-    stem = (raw.get("stem") or "").strip()
+    # stress/stem — см. комментарий выше; на entry кладём тоже (для заголовка
+    # статьи и на случай единственного омонима без пересечений).
+    if stress_int is not None:
+        entry["stress"] = stress_int
     if stem:
         entry["stem"] = stem
     # exclamation: восклицательная форма слова
