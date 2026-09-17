@@ -368,58 +368,12 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
     return entry
 
 
-def merge_site_entries(a: dict, b: dict) -> dict:
-    """Объединить две статьи с одинаковым word (омонимы / фрагменты на одной странице)."""
-    merged_results = (a.get("results") or []) + (b.get("results") or [])
-    forms_out: list[str] = []
-    seen: set[str] = set()
-    for f in (a.get("forms") or []) + (b.get("forms") or []):
-        if f and f not in seen:
-            seen.add(f)
-            forms_out.append(f)
-    lookup_merged: list[str] = []
-    for src in (a, b):
-        r0 = (src.get("results") or [{}])[0]
-        for x in r0.get("lookup") or []:
-            if x and x not in lookup_merged:
-                lookup_merged.append(x)
-    out = {
-        "word": a["word"],
-        "forms": forms_out,
-        "data": f"{a.get('data', '')} {b.get('data', '')}".strip(),
-        "results": merged_results,
-        "word_forms": a.get("word_forms") or b.get("word_forms"),
-        "page": a.get("page"),
-    }
-    if out["results"]:
-        lookup_merged = _filter_lookup_against_relations(lookup_merged, merged_results)
-        out["results"][0]["lookup"] = lookup_merged
-    gf_merged: list[str] = []
-    for src in (a, b):
-        for x in src.get("gender_forms") or []:
-            if x and x not in gf_merged:
-                gf_merged.append(x)
-    if gf_merged:
-        out["gender_forms"] = gf_merged
-    sf_merged: list[str] = []
-    for src in (a, b):
-        for x in src.get("spelling_forms") or []:
-            if x and x not in sf_merged:
-                sf_merged.append(x)
-    if sf_merged:
-        out["spelling_forms"] = sf_merged
-    for key in ("stress", "stem", "exclamation"):
-        if a.get(key) is not None:
-            out[key] = a[key]
-        elif b.get(key) is not None:
-            out[key] = b[key]
-    return out
-
-
-def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, dict], dict[str, str]]:
-    entries: dict[str, dict] = {}
+def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, list[dict]], dict[str, str]]:
+    """Каждое word может иметь несколько омонимов (разные части речи/значения
+    на разных строках jsonl) — они не сливаются в одну статью, а хранятся
+    списком и рендерятся фронтендом как отдельные карточки под одним словом."""
+    entries: dict[str, list[dict]] = {}
     form_to_word: dict[str, str] = {}
-    duplicates: dict[str, list[str]] = defaultdict(list)
 
     print(f"Чтение словаря: {path}")
     with open(path, encoding="utf-8") as f:
@@ -436,11 +390,7 @@ def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, dict], dict
             w = conv["word"]
             if not w:
                 continue
-            if w in entries:
-                duplicates[w].append(str(line_num))
-                entries[w] = merge_site_entries(entries[w], conv)
-            else:
-                entries[w] = conv
+            entries.setdefault(w, []).append(conv)
             for form in conv.get("forms") or []:
                 _register_form_variants(form_to_word, form, w)
             for form in conv.get("gender_forms") or []:
@@ -460,22 +410,24 @@ def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, dict], dict
     if stripped:
         print(f"  Форм→lemma: пропущено {len(stripped)} (есть своя статья)")
 
-    if duplicates:
-        print(f"  Объединено дубликатов word: {len(duplicates)}")
+    homonyms = {w: len(lst) for w, lst in entries.items() if len(lst) > 1}
+    if homonyms:
+        print(f"  Слов с несколькими омонимами: {len(homonyms)}")
     return entries, form_to_word
 
 
-def create_index(entries: dict[str, dict], form_to_word_map: dict[str, str] | None = None) -> list[str]:
+def create_index(entries: dict[str, list[dict]], form_to_word_map: dict[str, str] | None = None) -> list[str]:
     all_words: set[str] = set(entries.keys())
-    for word, entry in entries.items():
-        for form in (entry.get("forms") or []) + (entry.get("gender_forms") or []):
-            if form and form.strip():
-                fs = form.strip()
-                if "/" in fs:
-                    for variant in [v.strip() for v in fs.split("/") if v.strip()]:
-                        all_words.add(variant)
-                else:
-                    all_words.add(fs)
+    for word, entry_list in entries.items():
+        for entry in entry_list:
+            for form in (entry.get("forms") or []) + (entry.get("gender_forms") or []):
+                if form and form.strip():
+                    fs = form.strip()
+                    if "/" in fs:
+                        for variant in [v.strip() for v in fs.split("/") if v.strip()]:
+                            all_words.add(variant)
+                    else:
+                        all_words.add(fs)
     # form_to_word_map включает и словоформы, и варианты написания
     # (spelling_forms) без собственной статьи — они должны находиться поиском.
     if form_to_word_map:
@@ -497,9 +449,9 @@ def get_prefix(word: str, length: int = 2) -> str:
 
 
 def _group_data_for(
-    words: list[str], entries: dict[str, dict], form_to_word_map: dict[str, str]
-) -> dict[str, dict]:
-    data: dict[str, dict] = {}
+    words: list[str], entries: dict[str, list[dict]], form_to_word_map: dict[str, str]
+) -> dict[str, list[dict]]:
+    data: dict[str, list[dict]] = {}
     for w in words:
         if w in entries:
             data[w] = entries[w]
@@ -513,7 +465,7 @@ def _group_data_for(
 def _split_group(
     prefix: str,
     prefix_words: list[str],
-    entries: dict[str, dict],
+    entries: dict[str, list[dict]],
     form_to_word_map: dict[str, str],
     chunks: dict[str, dict],
     depth: int,
@@ -548,7 +500,7 @@ def _split_group(
 
 
 def split_into_chunks(
-    entries: dict[str, dict],
+    entries: dict[str, list[dict]],
     words: list[str],
     form_to_word_map: dict[str, str],
 ) -> dict[str, dict]:
@@ -572,7 +524,7 @@ def write_index(words: list[str], output_dir: Path) -> None:
     print(f"Индекс: {index_file} ({len(words)} строк)")
 
 
-def write_headwords_index(entries: dict[str, dict], output_dir: Path) -> int:
+def write_headwords_index(entries: dict[str, list[dict]], output_dir: Path) -> int:
     """Только заглавные слова — для листинга по префиксу (как на avar.me)."""
     headwords = sorted(entries.keys(), key=lambda w: (normalize_word(w), w))
     path = output_dir / "index.headwords.txt"
@@ -583,12 +535,16 @@ def write_headwords_index(entries: dict[str, dict], output_dir: Path) -> int:
     return len(headwords)
 
 
-def _entry_gloss(entry: dict, max_senses: int = 3) -> str:
+def _entry_gloss(entry_list: list[dict], max_senses: int = 3) -> str:
+    """Глосс для превью в browse — по всем омонимам этого word сразу."""
     parts: list[str] = []
-    for r in entry.get("results") or []:
-        t = (r.get("translation") or "").strip()
-        if t and t not in parts:
-            parts.append(t)
+    for entry in entry_list:
+        for r in entry.get("results") or []:
+            t = (r.get("translation") or "").strip()
+            if t and t not in parts:
+                parts.append(t)
+            if len(parts) >= max_senses:
+                break
         if len(parts) >= max_senses:
             break
     return "; ".join(parts)
@@ -604,12 +560,19 @@ def write_form_to_headword(form_map: dict[str, str], output_dir: Path) -> None:
     print(f"Form→headword: {path} ({len(compact)} записей, ~{size_kb} KB)")
 
 
-def write_browse(entries: dict[str, dict], output_dir: Path) -> None:
-    """Краткие глоссы и формы для главной и таблицы по префиксу."""
+def write_browse(entries: dict[str, list[dict]], output_dir: Path) -> None:
+    """Краткие глоссы и формы для главной и таблицы по префиксу — одна строка
+    на word, глосс/формы собраны по всем омонимам этого слова."""
     browse: dict[str, dict] = {}
-    for word, entry in entries.items():
-        gloss = _entry_gloss(entry)
-        forms = [str(f).strip() for f in (entry.get("forms") or []) if f and str(f).strip()][:8]
+    for word, entry_list in entries.items():
+        gloss = _entry_gloss(entry_list)
+        forms: list[str] = []
+        for entry in entry_list:
+            for f in entry.get("forms") or []:
+                fs = str(f).strip()
+                if fs and fs not in forms:
+                    forms.append(fs)
+        forms = forms[:8]
         if gloss or forms:
             browse[word] = {"g": gloss, "forms": forms}
     path = output_dir / "browse.json"

@@ -547,13 +547,15 @@ async function getWordData(word, dictType) {
     }
     
     const chunkData = await loadChunk(dictType, chunkFile);
-    
-    // chunkData is an object with words as keys: {word: entry, ...}
+
+    // chunkData is an object with words as keys: {word: [entry, ...], ...}
+    // (список — на одно word может быть несколько омонимов, каждый рендерится
+    // отдельной карточкой)
     // Try direct lookup first
     if (chunkData[word]) {
         return chunkData[word];
     }
-    
+
     // Fallback: case-insensitive search
     const wordNorm = normalizeWord(word);
     for (const [key, entry] of Object.entries(chunkData)) {
@@ -561,7 +563,7 @@ async function getWordData(word, dictType) {
             return entry;
         }
     }
-    
+
     return null;
 }
 
@@ -960,9 +962,9 @@ const handleSearchInput = debounce(async (query) => {
     } catch (err) {
         console.warn('Chunk lookup:', err);
     }
-    if (chunkHit) {
+    if (chunkHit && chunkHit.length) {
         showLoading(false);
-        renderResults([chunkHit]);
+        renderResults(chunkHit);
         window.location.hash = `word=${encodeURIComponent(wordForUrl(query))}`;
         updateSearchStats('', 0);
         return;
@@ -994,8 +996,8 @@ async function loadAndDisplayWord(word) {
         
         showLoading(false);
         
-        if (wordData) {
-            renderResults([wordData]);
+        if (wordData && wordData.length) {
+            renderResults(wordData);
             updateSearchStats(word, 1);
             const urlWord = wordForUrl(word);
             window.location.hash = `word=${encodeURIComponent(urlWord)}`;
