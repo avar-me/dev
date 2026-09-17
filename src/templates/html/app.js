@@ -143,7 +143,7 @@ function stressVowelIndex(word, stress) {
     return -1;
 }
 
-function formatWordWithStress(word, stress, applyStress = true) {
+function formatWordWithStress(word, stress, applyStress = true, asForm = false) {
     if (!word) return '';
     if (!applyStress || stress == null) return escapeHtml(word);
 
@@ -151,10 +151,12 @@ function formatWordWithStress(word, stress, applyStress = true) {
     const si = stressVowelIndex(word, stress);
     if (si < 0) return escapeHtml(word);
 
+    const cls = asForm ? 'stress-vowel-form' : 'stress-vowel';
+    const accent = asForm ? '' : '́';
     let html = '';
     for (let i = 0; i < chars.length; i++) {
         if (i === si) {
-            html += `<span class="stress-vowel">${escapeHtml(chars[i])}́</span>`;
+            html += `<span class="${cls}">${escapeHtml(chars[i])}${accent}</span>`;
         } else {
             html += escapeHtml(chars[i]);
         }
@@ -223,7 +225,7 @@ function formatPartWithStress(part, offset, stressIdx) {
     let html = '';
     for (let i = 0; i < chars.length; i++) {
         if (offset + i === stressIdx) {
-            html += `<span class="stress-vowel">${escapeHtml(chars[i])}́</span>`;
+            html += `<span class="stress-vowel-form">${escapeHtml(chars[i])}</span>`;
         } else {
             html += escapeHtml(chars[i]);
         }
@@ -243,7 +245,7 @@ function formatFormDisplay(form, headword, stem, stress) {
             `<span class="form-suffix">${formatPartWithStress(parts.suffix, parts.stem.length, si)}</span>`
         );
     }
-    return formatWordWithStress(form, stress, showStress);
+    return formatWordWithStress(form, stress, showStress, true);
 }
 
 /**

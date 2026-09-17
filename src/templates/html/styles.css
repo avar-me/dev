@@ -584,6 +584,15 @@ a:hover {
   font-weight: inherit;
 }
 
+.stress-vowel-form {
+  color: var(--accent);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(154, 123, 26, 0.55);
+}
+
 /* Exclamation form badge (e.g. "бу!") */
 .word-excl {
   font-family: var(--font-serif);
