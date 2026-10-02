@@ -15,5 +15,8 @@ av-ru.jsonl
 # Локальный кэш
 .cache/
 
+# Офлайн-архив из package-offline.sh
+dist/
+
 # Локальные настройки Claude Code / Cursor / других ассистентов
 .claude/settings.local.json
