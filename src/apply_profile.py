@@ -399,18 +399,29 @@ def _code_fingerprint(docs: Path) -> str:
     return h.hexdigest()[:12]
 
 
-def resolve_build_id(docs: Path, site: dict) -> str:
-    manifest_path = docs / "data" / site["dict_av"] / "manifest.json"
-    data_id = "dev"
-    if manifest_path.is_file():
+def _data_fingerprint(docs: Path, site: dict) -> str:
+    """Хэш по build_id ВСЕХ словарей сайта (dict_av/dict_xx и extra_dicts),
+    не только dict_av — иначе смена данных в доп. словаре (напр. av-ru.1936)
+    не меняет __ASSET_VERSION__, и CDN отдаёт его старые чанки под тем же
+    versioned-URL."""
+    parts: list[str] = []
+    for dict_id in site["dicts"]:
+        manifest_path = docs / "data" / dict_id / "manifest.json"
+        if not manifest_path.is_file():
+            parts.append("dev")
+            continue
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         build_id = manifest.get("build_id") or ""
         if build_id:
-            data_id = str(build_id)
+            parts.append(str(build_id))
         else:
             date = str(manifest.get("build_date") or "")
-            if date:
-                data_id = date.replace(":", "").replace("-", "")[:15]
+            parts.append(date.replace(":", "").replace("-", "")[:15] if date else "dev")
+    return ":".join(parts)
+
+
+def resolve_build_id(docs: Path, site: dict) -> str:
+    data_id = _data_fingerprint(docs, site)
     return hashlib.md5(f"{data_id}:{_code_fingerprint(docs)}".encode("utf-8")).hexdigest()[:12]
 
 
