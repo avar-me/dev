@@ -20,6 +20,7 @@ import os
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import Callable
 
 MAX_CHUNK_SIZE = 100 * 1024
 MAX_WORDS_PER_CHUNK = 500
@@ -371,10 +372,18 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
     return entry
 
 
-def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, list[dict]], dict[str, str]]:
+def load_dictionary(
+    path: Path,
+    lang: str = "ru",
+    translit_fn: Callable[[dict], dict] | None = None,
+) -> tuple[dict[str, list[dict]], dict[str, str]]:
     """Каждое word может иметь несколько омонимов (разные части речи/значения
     на разных строках jsonl) — они не сливаются в одну статью, а хранятся
-    списком и рендерятся фронтендом как отдельные карточки под одним словом."""
+    списком и рендерятся фронтендом как отдельные карточки под одним словом.
+
+    translit_fn — опциональная транслитерация сырой строки (напр. латиница
+    Жиркова → кириллица для av-ru.1936), применяется до convert_entry.
+    """
     entries: dict[str, list[dict]] = {}
     form_to_word: dict[str, str] = {}
 
@@ -389,6 +398,8 @@ def load_dictionary(path: Path, lang: str = "ru") -> tuple[dict[str, list[dict]]
             except json.JSONDecodeError as e:
                 print(f"  ОШИБКА JSON строка {line_num}: {e}", file=sys.stderr)
                 continue
+            if translit_fn:
+                raw = translit_fn(raw)
             conv = convert_entry(raw, lang)
             w = conv["word"]
             if not w:
@@ -643,8 +654,14 @@ def write_manifest(
 
 
 def _direction_parts(direction: str) -> tuple[str, bool]:
-    """('ru', True) для av-ru; ('en', False) для en-av."""
+    """('ru', True) для av-ru; ('en', False) для en-av.
+
+    Версионный суффикс (av-ru.1936 → av-ru) отбрасывается — это отдельный
+    исходник того же направления, а не новый язык.
+    """
     left, right = direction.split("-", 1)
+    left = left.split(".", 1)[0]
+    right = right.split(".", 1)[0]
     av_first = left == "av"
     target = right if av_first else left
     return target, av_first
@@ -763,11 +780,16 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
     print(f"Фразы ({direction}): {len(phrases)} → {output_dir} ({len(chunk_info)} чанков)")
 
 
-def build_av_ru(dictionary_path: Path, output_dir: Path, lang: str = "ru") -> bool:
+def build_av_ru(
+    dictionary_path: Path,
+    output_dir: Path,
+    lang: str = "ru",
+    translit_fn: Callable[[dict], dict] | None = None,
+) -> bool:
     print("=" * 60)
     print(f"Сборка {output_dir.name} → {output_dir}")
     print("=" * 60)
-    entries, form_map = load_dictionary(dictionary_path, lang)
+    entries, form_map = load_dictionary(dictionary_path, lang, translit_fn)
     if not entries:
         print("Нет записей.", file=sys.stderr)
         return False
@@ -783,6 +805,17 @@ def build_av_ru(dictionary_path: Path, output_dir: Path, lang: str = "ru") -> bo
     return True
 
 
+# Версионные/исторические словари (av-ru.1936, …) — отдельный источник того
+# же направления, не нужны в TMA и /phrases, и могут требовать транслитерации
+# сырых (напр. латиница Жиркова → кириллица) полей перед обычной обработкой.
+def _translit_for(dict_name: str) -> Callable[[dict], dict] | None:
+    if dict_name == "av-ru.1936":
+        from translit_1936 import transliterate_entry
+
+        return transliterate_entry
+    return None
+
+
 def main() -> None:
     dict_path = Path(os.environ.get("DICTIONARY_JSONL", DEFAULT_DICTIONARY)).resolve()
     if not dict_path.is_file():
@@ -792,21 +825,25 @@ def main() -> None:
     docs_root = Path(os.environ.get("DOCS_ROOT", DEFAULT_DOCS)).resolve()
     dict_name = os.environ.get("DICT_NAME", "av-ru")
     lang, _ = _direction_parts(dict_name)
-    targets = [
-        docs_root / "data" / dict_name,
-        docs_root / "tma" / "data" / dict_name,
-    ]
+    is_versioned = "." in dict_name
+    translit_fn = _translit_for(dict_name)
+
+    targets = [docs_root / "data" / dict_name]
+    if not is_versioned:
+        targets.append(docs_root / "tma" / "data" / dict_name)
+
     ok = 0
     for out in targets:
-        if build_av_ru(dict_path, out, lang):
+        if build_av_ru(dict_path, out, lang, translit_fn):
             ok += 1
     if ok != len(targets):
         sys.exit(1)
 
-    # /phrases — только основной сайт, TMA не нужен
-    build_phrases(dict_path, dict_name, docs_root / "data" / "phrases" / dict_name)
+    if not is_versioned:
+        # /phrases — только основной сайт, TMA не нужен
+        build_phrases(dict_path, dict_name, docs_root / "data" / "phrases" / dict_name)
 
-    print(f"\nГотово: {docs_root.name}/data/{dict_name} и {docs_root.name}/tma/data/{dict_name}")
+    print(f"\nГотово: {docs_root.name}/data/{dict_name}" + ("" if is_versioned else f" и {docs_root.name}/tma/data/{dict_name}"))
 
 
 if __name__ == "__main__":

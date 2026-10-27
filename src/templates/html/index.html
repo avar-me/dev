@@ -37,8 +37,8 @@
     <link rel="apple-touch-icon" sizes="192x192" href="favicon-192.png">
 
     <!-- Preload critical resources -->
-    <link rel="preload" href="data/__DICT_AV__/index.words.txt?v=__ASSET_VERSION__" as="fetch" crossorigin>
-    <link rel="preload" href="data/__DICT_AV__/browse.json?v=__ASSET_VERSION__" as="fetch" crossorigin>
+    <link rel="preload" href="data/__DICT_DEFAULT__/index.words.txt?v=__ASSET_VERSION__" as="fetch" crossorigin>
+    <link rel="preload" href="data/__DICT_DEFAULT__/browse.json?v=__ASSET_VERSION__" as="fetch" crossorigin>
 </head>
 <body>
     <!-- Фоновый паттерн (из index.avar.me) -->
@@ -86,10 +86,7 @@
         <!-- Header -->
         <header class="header">
             <p class="header-tag">__SITE_TAG__ <a href="https://avar.me" target="_blank" rel="noopener">avar.me</a></p>
-            <div class="dict-toggle">
-                <button class="toggle-btn active" data-type="__DICT_AV__">__LABEL_AV_XX__</button>
-                <button class="toggle-btn" data-type="__DICT_XX__">__LABEL_XX_AV__</button>
-            </div>
+            <div class="dict-toggle" id="dictToggle"></div>
             <p class="header-link"><a class="phrases-link" href="phrases.html">__UI_PHRASES_LINK__</a></p>
         </header>
 

@@ -260,6 +260,9 @@ def load_site(root: Path | None = None) -> dict:
     dict_xx = f"{target}-av"
     label_av = profile["label_av"]
     label_xx = profile["label_xx"]
+    # Доп. словари профиля (напр. исторический av-ru.1936) — однонаправленные,
+    # ставятся перед обычной парой av-xx/xx-av (см. extra_dicts в профиле).
+    extra_dicts = profile.get("extra_dicts") or []
     return {
         "id": pid,
         "target": target,
@@ -282,33 +285,49 @@ def load_site(root: Path | None = None) -> dict:
         "ui": UI_STRINGS.get(target, UI_STRINGS["ru"]),
         "dict_av": dict_av,
         "dict_xx": dict_xx,
-        "dicts": [dict_av, dict_xx],
+        "extra_dicts": extra_dicts,
+        "dicts": [d["id"] for d in extra_dicts] + [dict_av, dict_xx],
     }
 
 
 def site_payload(site: dict) -> dict:
     host = site["host"]
+    dicts = []
+    for d in site.get("extra_dicts") or []:
+        dicts.append(
+            {
+                "id": d["id"],
+                "label": d["label"],
+                "title": f"{d['title']} — {host}",
+                "shortAv": d.get("shortAv", site["label_av"]),
+                "shortXx": d.get("shortXx", site["label_xx"]),
+                "avFirst": d.get("avFirst", True),
+            }
+        )
+    dicts.append(
+        {
+            "id": site["dict_av"],
+            "label": site["label_av_xx"],
+            "title": f"{site['title_av_xx']} — {host}",
+            "shortAv": site["label_av"],
+            "shortXx": site["label_xx"],
+            "avFirst": True,
+        }
+    )
+    dicts.append(
+        {
+            "id": site["dict_xx"],
+            "label": site["label_xx_av"],
+            "title": f"{site['title_xx_av']} — {host}",
+            "shortAv": site["label_av"],
+            "shortXx": site["label_xx"],
+            "avFirst": False,
+        }
+    )
     return {
         "id": site["id"],
         "host": host,
-        "dicts": [
-            {
-                "id": site["dict_av"],
-                "label": site["label_av_xx"],
-                "title": f"{site['title_av_xx']} — {host}",
-                "shortAv": site["label_av"],
-                "shortXx": site["label_xx"],
-                "avFirst": True,
-            },
-            {
-                "id": site["dict_xx"],
-                "label": site["label_xx_av"],
-                "title": f"{site['title_xx_av']} — {host}",
-                "shortAv": site["label_av"],
-                "shortXx": site["label_xx"],
-                "avFirst": False,
-            },
-        ],
+        "dicts": dicts,
         "ui": site["ui"],
     }
 
@@ -336,6 +355,7 @@ def placeholders(site: dict, build_id: str) -> dict[str, str]:
         "__HTML_LANG__": site["html_lang"],
         "__DICT_AV__": site["dict_av"],
         "__DICT_XX__": site["dict_xx"],
+        "__DICT_DEFAULT__": site["dicts"][0],
         "__LABEL_AV__": site["label_av"],
         "__LABEL_XX__": site["label_xx"],
         "__LABEL_AV_XX__": site["label_av_xx"],

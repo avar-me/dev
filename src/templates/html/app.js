@@ -1028,8 +1028,20 @@ const DICT_TITLES = Object.fromEntries(
     SITE.dicts.map((d) => [d.id, { doc: d.title }])
 );
 
+/** Переключатель словарей — кнопки строятся из SITE.dicts (может быть и 3+). */
+function renderDictToggle() {
+    const container = document.getElementById('dictToggle');
+    if (!container) return;
+    container.innerHTML = SITE.dicts
+        .map((d) => {
+            const active = d.id === state.currentDictType ? ' active' : '';
+            return `<button class="toggle-btn${active}" data-type="${escapeHtml(d.id)}">${escapeHtml(d.label)}</button>`;
+        })
+        .join('');
+}
+
 /**
- * Switch dictionary type (av-ru / ru-av)
+ * Switch dictionary type (av-ru / ru-av / …)
  */
 async function switchDictType(newType) {
     if (newType === state.currentDictType) return;
@@ -1235,10 +1247,9 @@ async function init() {
         state.browse = browse;
         state.manifest = manifest;
 
-        // Mark initial active toggle button
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.type === state.currentDictType);
-        });
+        // Переключатель строится из SITE.dicts — initEventListeners() ниже
+        // навешивает клики уже на готовые кнопки.
+        renderDictToggle();
         const initialTitle = DICT_TITLES[state.currentDictType];
         if (initialTitle) {
             document.title = initialTitle.doc;
