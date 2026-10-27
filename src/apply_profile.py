@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -379,17 +380,38 @@ def placeholders(site: dict, build_id: str) -> dict[str, str]:
     }
 
 
+#  Файлы шаблонов/скриптов, скопированные в docs/ до apply() — хешируются
+#  в составе __ASSET_VERSION__, иначе деплой, меняющий только app.js/
+#  styles.css (без изменений в словарных данных), не меняет build_id, и
+#  CDN продолжает отдавать старый app.js под тем же versioned-URL (?v=...).
+_CODE_FILES_FOR_BUILD_ID = (
+    "app.js", "styles.css", "phrases.js", "phrases.html", "index.html",
+    "tma/app.js", "tma/styles.css", "tma/index.html",
+)
+
+
+def _code_fingerprint(docs: Path) -> str:
+    h = hashlib.md5()
+    for rel in _CODE_FILES_FOR_BUILD_ID:
+        path = docs / rel
+        if path.is_file():
+            h.update(path.read_bytes())
+    return h.hexdigest()[:12]
+
+
 def resolve_build_id(docs: Path, site: dict) -> str:
     manifest_path = docs / "data" / site["dict_av"] / "manifest.json"
+    data_id = "dev"
     if manifest_path.is_file():
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         build_id = manifest.get("build_id") or ""
         if build_id:
-            return str(build_id)
-        date = str(manifest.get("build_date") or "")
-        if date:
-            return date.replace(":", "").replace("-", "")[:15]
-    return "dev"
+            data_id = str(build_id)
+        else:
+            date = str(manifest.get("build_date") or "")
+            if date:
+                data_id = date.replace(":", "").replace("-", "")[:15]
+    return hashlib.md5(f"{data_id}:{_code_fingerprint(docs)}".encode("utf-8")).hexdigest()[:12]
 
 
 def _stamp(text: str, mapping: dict[str, str]) -> str:
