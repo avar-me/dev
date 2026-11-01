@@ -258,15 +258,19 @@ a:hover {
    DICT TOGGLE
    ============================================================================ */
 
+/* Сетка 2-3 колонки — при росте числа словарей не упирается в overflow:hidden
+   и не ломает единую полосу неровным переносом. */
 .dict-toggle {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
   margin-top: 1.25rem;
-  border: 1.5px solid var(--border-strong);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--bg-secondary);
+}
+
+@media (min-width: 900px) {
+  .dict-toggle {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .toggle-btn {
@@ -275,15 +279,13 @@ a:hover {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-muted);
-  background: transparent;
-  border: none;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
-  white-space: nowrap;
-}
-
-.toggle-btn + .toggle-btn {
-  border-left: 1.5px solid var(--border-strong);
+  text-align: center;
+  line-height: 1.25;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .toggle-btn:hover {
@@ -293,6 +295,7 @@ a:hover {
 
 .toggle-btn.active {
   background: var(--bg-card);
+  border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
 }
@@ -301,17 +304,28 @@ a:hover {
   .dict-toggle {
     display: flex;
     flex-direction: column;
+    gap: 0;
     width: 100%;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-secondary);
   }
 
   .toggle-btn {
     width: 100%;
     padding: 0.65rem 1.15rem;
+    border: none;
+    border-radius: 0;
+    background: transparent;
   }
 
   .toggle-btn + .toggle-btn {
-    border-left: none;
     border-top: 1.5px solid var(--border-strong);
+  }
+
+  .toggle-btn.active {
+    border-color: transparent;
   }
 }
 
