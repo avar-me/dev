@@ -296,6 +296,24 @@ a:hover {
   font-weight: 600;
 }
 
+@media (max-width: 600px) {
+  .dict-toggle {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .toggle-btn {
+    width: 100%;
+    padding: 0.65rem 1.15rem;
+  }
+
+  .toggle-btn + .toggle-btn {
+    border-left: none;
+    border-top: 1.5px solid var(--border-strong);
+  }
+}
+
 .header-link {
   margin-top: 0.75rem;
   font-size: 0.9rem;
