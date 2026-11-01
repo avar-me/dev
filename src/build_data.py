@@ -372,10 +372,10 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
     return entry
 
 
-# av-ru.1967: плоская схема — весь разбор статьи лежит одной строкой в "text"
-# (грамматика, перевод, примеры, ссылки вперемешку), нет senses/forms/see_also.
-# "stress" — 1-based позиция УДАРНОЙ БУКВЫ в "word" (не номер гласной, как в
-# av-ru/ru-av/av-ru.1936!) — пересчитываем в номер гласной для fronend'а.
+# av-ru.1967: схема — та же структура senses[]/forms/see_also, что у av-ru.1936
+# и av-ru, НО "stress" тут — 1-based позиция УДАРНОЙ БУКВЫ в "word" (не номер
+# гласной, как в av-ru/ru-av/av-ru.1936!). convert_entry() кладёт raw["stress"]
+# как номер гласной без пересчёта — для 1967 его нужно пересчитать отдельно.
 _VOWELS_1967 = set("аеёиоуыэюяӀӏ")
 
 
@@ -391,34 +391,21 @@ def _char_stress_to_vowel_index(word: str, char_pos: object) -> int | None:
 
 
 def convert_1967_entry(raw: dict, lang: str = "ru") -> dict:
-    word = (raw.get("word") or "").strip()
-    text = (raw.get("text") or "").strip()
-    comment = (raw.get("comment") or "").strip() or None
-    spelling_forms = [
-        str(f).strip()
-        for f in (raw.get("spelling_forms") or [])
-        if f and str(f).strip() and str(f).strip() != word
-    ]
-    stress_int = _char_stress_to_vowel_index(word, raw.get("stress"))
+    entry = convert_entry(raw, lang)
+    stress_int = _char_stress_to_vowel_index(entry.get("word") or "", raw.get("stress"))
 
-    result: dict = {"labels": [], "translation": text, "forms": [], "examples": [], "lookup": []}
-    if comment:
-        result["comment"] = comment
-    if stress_int is not None:
-        result["stress"] = stress_int
-
-    entry: dict = {
-        "word": word,
-        "forms": [],
-        "data": f"{word} {text}".strip(),
-        "results": [result],
-        "word_forms": None,
-        "page": None,
-    }
     if stress_int is not None:
         entry["stress"] = stress_int
-    if spelling_forms:
-        entry["spelling_forms"] = spelling_forms
+    else:
+        entry.pop("stress", None)
+
+    if entry.get("results"):
+        first = entry["results"][0]
+        if stress_int is not None:
+            first["stress"] = stress_int
+        else:
+            first.pop("stress", None)
+
     return entry
 
 
