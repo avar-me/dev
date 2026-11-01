@@ -437,6 +437,15 @@ function wordForUrl(query) {
 }
 
 /**
+ * Хэш для ссылки на статью — с текущим словарём, иначе открытая кем-то
+ * ссылка на не-дефолтный словарь при загрузке попадёт в дефолтный, где
+ * этого слова может не быть.
+ */
+function wordHash(urlWord) {
+    return `dict=${encodeURIComponent(state.currentDictType)}&word=${encodeURIComponent(urlWord)}`;
+}
+
+/**
  * Префикс по всему индексу (формы + gender_forms), в таблице — заглавные слова.
  */
 function collectPrefixHeadwords(query) {
@@ -973,7 +982,7 @@ const handleSearchInput = debounce(async (query) => {
     if (chunkHit && chunkHit.length) {
         showLoading(false);
         renderResults(chunkHit);
-        window.location.hash = `word=${encodeURIComponent(wordForUrl(query))}`;
+        window.location.hash = wordHash(wordForUrl(query));
         updateSearchStats('', 0);
         return;
     }
@@ -1007,8 +1016,7 @@ async function loadAndDisplayWord(word) {
         if (wordData && wordData.length) {
             renderResults(wordData);
             updateSearchStats(word, 1);
-            const urlWord = wordForUrl(word);
-            window.location.hash = `word=${encodeURIComponent(urlWord)}`;
+            window.location.hash = wordHash(wordForUrl(word));
         } else {
             renderNotFound();
             updateSearchStats(word, 0);
@@ -1194,15 +1202,21 @@ function initEventListeners() {
     // Handle URL hash (back/forward, открытие по ссылке).
     // Пока строка поиска в фокусе — пользователь печатает, хэш меняется
     // из-за резолва формы в лемму (loadAndDisplayWord), а не из-за навигации.
-    window.addEventListener('hashchange', () => {
+    window.addEventListener('hashchange', async () => {
         if (document.activeElement === searchInput) return;
 
         const hash = window.location.hash.slice(1);
         const params = new URLSearchParams(hash);
         const word = params.get('word');
+        const dict = params.get('dict');
+
+        if (word) searchInput.value = word;
+
+        if (dict && DICT_TITLES[dict] && dict !== state.currentDictType) {
+            await switchDictType(dict);
+        }
 
         if (word) {
-            searchInput.value = word;
             loadAndDisplayWord(word);
         }
     });
