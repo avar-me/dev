@@ -18,6 +18,14 @@
       "shortAv": "Авар.1936",
       "shortXx": "Рус",
       "avFirst": true
+    },
+    {
+      "id": "av-ru.1967",
+      "label": "Авар (1967) → Рус",
+      "title": "Аварско-русский словарь (1967)",
+      "shortAv": "Авар.1967",
+      "shortXx": "Рус",
+      "avFirst": true
     }
   ]
 }

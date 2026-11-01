@@ -94,9 +94,9 @@ function debounce(func, delay) {
     return debounced;
 }
 
+/** index по dict.id -> проиндексированный массив фраз (или null, если не загрузился). */
 const state = {
-    fwd: null,
-    rev: null,
+    byDict: new Map(),
 };
 
 /**
@@ -165,12 +165,32 @@ function renderRows(items, dict, queryNorm, reversed) {
     return `<div class="phrase-list">${rows}</div>`;
 }
 
-function renderSection(containerId, index, dict, queryNorm, reversed, leftLabel, rightLabel) {
-    const container = document.getElementById(containerId);
+function tableContainerId(dictId) {
+    return `table-${dictId}`;
+}
+
+/** Секции — по одной на каждый словарь из SITE.dicts (может быть 2, 3, 4…). */
+function renderDictSections() {
+    const container = document.getElementById('phraseResults');
+    container.innerHTML = SITE.dicts
+        .map((d) => `
+            <section class="phrase-section" id="section-${escapeHtml(d.id)}">
+                <h2 class="phrase-section-title">${escapeHtml(d.label)}</h2>
+                <div id="${escapeHtml(tableContainerId(d.id))}" class="phrase-table-wrap"></div>
+            </section>
+        `)
+        .join('');
+}
+
+function renderSection(dict, queryNorm) {
+    const container = document.getElementById(tableContainerId(dict.id));
+    if (!container) return;
+    const index = state.byDict.get(dict.id);
     if (!index) {
         container.innerHTML = '';
         return;
     }
+    const [leftLabel, rightLabel, reversed] = sectionLabels(dict);
     const { results, total } = searchPhrases(index, queryNorm, CONFIG.MAX_RESULTS);
     const caption =
         total > CONFIG.MAX_RESULTS
@@ -183,7 +203,7 @@ function renderSection(containerId, index, dict, queryNorm, reversed, leftLabel,
             <div>${escapeHtml(SITE.ui.wordCol)}</div>
         </div>
     `;
-    container.innerHTML = `<p class="phrase-table-caption">${caption}</p>${header}${renderRows(results, dict, queryNorm, reversed)}`;
+    container.innerHTML = `<p class="phrase-table-caption">${caption}</p>${header}${renderRows(results, dict.id, queryNorm, reversed)}`;
 }
 
 function sectionLabels(dict) {
@@ -192,8 +212,10 @@ function sectionLabels(dict) {
 }
 
 function renderEmptyState() {
-    document.getElementById('tableAvRu').innerHTML = '';
-    document.getElementById('tableRuAv').innerHTML = '';
+    SITE.dicts.forEach((d) => {
+        const el = document.getElementById(tableContainerId(d.id));
+        if (el) el.innerHTML = '';
+    });
     document.getElementById('phraseStats').textContent = '';
 }
 
@@ -214,11 +236,7 @@ function runSearch(query) {
     }
     statsEl.textContent = '';
     const queryNorm = normalizeQuery(query);
-    const [fwd, rev] = SITE.dicts;
-    const [fwdL, fwdR, fwdRev] = sectionLabels(fwd);
-    const [revL, revR, revRev] = sectionLabels(rev);
-    renderSection('tableAvRu', state.fwd, fwd.id, queryNorm, fwdRev, fwdL, fwdR);
-    renderSection('tableRuAv', state.rev, rev.id, queryNorm, revRev, revL, revR);
+    SITE.dicts.forEach((dict) => renderSection(dict, queryNorm));
 }
 
 const handleInput = debounce((query) => {
@@ -249,18 +267,25 @@ async function init() {
     const input = document.getElementById('phraseSearchInput');
     const clearBtn = document.getElementById('phraseClearBtn');
 
+    renderDictSections();
+
     showLoading(true);
-    try {
-        const [fwd, rev] = SITE.dicts;
-        const [fwdIndex, revIndex] = await Promise.all([
-            loadPhraseSet(fwd.id),
-            loadPhraseSet(rev.id),
-        ]);
-        state.fwd = fwdIndex;
-        state.rev = revIndex;
-        console.log(`Phrases loaded: ${fwd.id}=${fwdIndex.length}, ${rev.id}=${revIndex.length}`);
-    } catch (error) {
-        console.error('Error loading phrases:', error);
+    // allSettled — не роняем весь поиск, если не загрузился один источник
+    // (напр. ещё не пересобрался /phrases для нового словаря).
+    const settled = await Promise.allSettled(SITE.dicts.map((d) => loadPhraseSet(d.id)));
+    let loadedCount = 0;
+    settled.forEach((res, i) => {
+        const dict = SITE.dicts[i];
+        if (res.status === 'fulfilled') {
+            state.byDict.set(dict.id, res.value);
+            loadedCount++;
+            console.log(`Phrases loaded: ${dict.id}=${res.value.length}`);
+        } else {
+            state.byDict.set(dict.id, null);
+            console.error(`Error loading phrases for ${dict.id}:`, res.reason);
+        }
+    });
+    if (loadedCount === 0) {
         showError('Не удалось загрузить данные для поиска по фразам');
     }
     showLoading(false);

@@ -372,17 +372,68 @@ def convert_entry(raw: dict, lang: str = "ru") -> dict:
     return entry
 
 
+# av-ru.1967: плоская схема — весь разбор статьи лежит одной строкой в "text"
+# (грамматика, перевод, примеры, ссылки вперемешку), нет senses/forms/see_also.
+# "stress" — 1-based позиция УДАРНОЙ БУКВЫ в "word" (не номер гласной, как в
+# av-ru/ru-av/av-ru.1936!) — пересчитываем в номер гласной для fronend'а.
+_VOWELS_1967 = set("аеёиоуыэюяӀӏ")
+
+
+def _char_stress_to_vowel_index(word: str, char_pos: object) -> int | None:
+    try:
+        idx = int(char_pos)
+    except (TypeError, ValueError):
+        return None
+    if idx < 1 or idx > len(word):
+        return None
+    vowel_count = sum(1 for ch in word[:idx] if ch.lower() in _VOWELS_1967)
+    return vowel_count or None
+
+
+def convert_1967_entry(raw: dict, lang: str = "ru") -> dict:
+    word = (raw.get("word") or "").strip()
+    text = (raw.get("text") or "").strip()
+    comment = (raw.get("comment") or "").strip() or None
+    spelling_forms = [
+        str(f).strip()
+        for f in (raw.get("spelling_forms") or [])
+        if f and str(f).strip() and str(f).strip() != word
+    ]
+    stress_int = _char_stress_to_vowel_index(word, raw.get("stress"))
+
+    result: dict = {"labels": [], "translation": text, "forms": [], "examples": [], "lookup": []}
+    if comment:
+        result["comment"] = comment
+    if stress_int is not None:
+        result["stress"] = stress_int
+
+    entry: dict = {
+        "word": word,
+        "forms": [],
+        "data": f"{word} {text}".strip(),
+        "results": [result],
+        "word_forms": None,
+        "page": None,
+    }
+    if stress_int is not None:
+        entry["stress"] = stress_int
+    if spelling_forms:
+        entry["spelling_forms"] = spelling_forms
+    return entry
+
+
 def load_dictionary(
     path: Path,
     lang: str = "ru",
-    translit_fn: Callable[[dict], dict] | None = None,
+    converter: Callable[[dict, str], dict] = convert_entry,
 ) -> tuple[dict[str, list[dict]], dict[str, str]]:
     """Каждое word может иметь несколько омонимов (разные части речи/значения
     на разных строках jsonl) — они не сливаются в одну статью, а хранятся
     списком и рендерятся фронтендом как отдельные карточки под одним словом.
 
-    translit_fn — опциональная транслитерация сырой строки (напр. латиница
-    Жиркова → кириллица для av-ru.1936), применяется до convert_entry.
+    converter — функция строка jsonl → запись фронтенда; по умолчанию
+    convert_entry (схема av-ru/ru-av/av-ru.1936), для других схем (напр.
+    av-ru.1967 — плоское поле text) передаётся своя, см. _converter_for().
     """
     entries: dict[str, list[dict]] = {}
     form_to_word: dict[str, str] = {}
@@ -398,9 +449,7 @@ def load_dictionary(
             except json.JSONDecodeError as e:
                 print(f"  ОШИБКА JSON строка {line_num}: {e}", file=sys.stderr)
                 continue
-            if translit_fn:
-                raw = translit_fn(raw)
-            conv = convert_entry(raw, lang)
+            conv = converter(raw, lang)
             w = conv["word"]
             if not w:
                 continue
@@ -690,6 +739,9 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
             if not word:
                 continue
             senses = raw.get("senses") or raw.get("translations") or []
+            if not senses and raw.get("text"):
+                # av-ru.1967: плоская схема, весь разбор статьи — в "text"
+                senses = [{"text": raw["text"], "comment": raw.get("comment")}]
             word_has_phrase = False
             for sense in senses:
                 if not isinstance(sense, dict):
@@ -784,12 +836,12 @@ def build_av_ru(
     dictionary_path: Path,
     output_dir: Path,
     lang: str = "ru",
-    translit_fn: Callable[[dict], dict] | None = None,
+    converter: Callable[[dict, str], dict] = convert_entry,
 ) -> bool:
     print("=" * 60)
     print(f"Сборка {output_dir.name} → {output_dir}")
     print("=" * 60)
-    entries, form_map = load_dictionary(dictionary_path, lang, translit_fn)
+    entries, form_map = load_dictionary(dictionary_path, lang, converter)
     if not entries:
         print("Нет записей.", file=sys.stderr)
         return False
@@ -805,15 +857,17 @@ def build_av_ru(
     return True
 
 
-# Версионные/исторические словари (av-ru.1936, …) — отдельный источник того
-# же направления, не нужны в TMA и /phrases, и могут требовать транслитерации
-# сырых (напр. латиница Жиркова → кириллица) полей перед обычной обработкой.
-def _translit_for(dict_name: str) -> Callable[[dict], dict] | None:
-    if dict_name == "av-ru.1936":
-        from translit_1936 import transliterate_entry
+# Версионные/исторические словари (av-ru.1936, av-ru.1967, …) — отдельный
+# источник того же направления, не нужны в TMA (но нужны в /phrases — см.
+# main()). Некоторые используют другую схему jsonl, чем av-ru/ru-av —
+# регистрируем свой converter для load_dictionary()/build_av_ru().
+_CONVERTERS: dict[str, Callable[[dict, str], dict]] = {
+    "av-ru.1967": convert_1967_entry,
+}
 
-        return transliterate_entry
-    return None
+
+def _converter_for(dict_name: str) -> Callable[[dict, str], dict]:
+    return _CONVERTERS.get(dict_name, convert_entry)
 
 
 def main() -> None:
@@ -826,7 +880,7 @@ def main() -> None:
     dict_name = os.environ.get("DICT_NAME", "av-ru")
     lang, _ = _direction_parts(dict_name)
     is_versioned = "." in dict_name
-    translit_fn = _translit_for(dict_name)
+    converter = _converter_for(dict_name)
 
     targets = [docs_root / "data" / dict_name]
     if not is_versioned:
@@ -834,14 +888,13 @@ def main() -> None:
 
     ok = 0
     for out in targets:
-        if build_av_ru(dict_path, out, lang, translit_fn):
+        if build_av_ru(dict_path, out, lang, converter):
             ok += 1
     if ok != len(targets):
         sys.exit(1)
 
-    if not is_versioned:
-        # /phrases — только основной сайт, TMA не нужен
-        build_phrases(dict_path, dict_name, docs_root / "data" / "phrases" / dict_name)
+    # /phrases — для всех словарей (включая исторические, по явному запросу)
+    build_phrases(dict_path, dict_name, docs_root / "data" / "phrases" / dict_name)
 
     print(f"\nГотово: {docs_root.name}/data/{dict_name}" + ("" if is_versioned else f" и {docs_root.name}/tma/data/{dict_name}"))
 
