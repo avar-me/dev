@@ -26,6 +26,22 @@
       "shortAv": "Авар.1967",
       "shortXx": "Рус",
       "avFirst": true
+    },
+    {
+      "id": "av-ru.orosib",
+      "label": "Неологизмы: Авар → Рус",
+      "title": "Словарь неологизмов (orosib.wixsite.com/avar)",
+      "shortAv": "Неол.",
+      "shortXx": "Рус",
+      "avFirst": true
+    },
+    {
+      "id": "ru-av.orosib",
+      "label": "Неологизмы: Рус → Авар",
+      "title": "Словарь неологизмов (orosib.wixsite.com/avar)",
+      "shortAv": "Неол.",
+      "shortXx": "Рус",
+      "avFirst": false
     }
   ]
 }
