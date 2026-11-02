@@ -734,7 +734,15 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                 if not isinstance(sense, dict):
                     continue
                 text = (sense.get("text") or "").strip()
-                comment = _clean_comment_for_site(sense.get("comment") or "")
+                label_parts: list[str] = []
+                for lab in sense.get("labels") or []:
+                    s = str(lab).strip()
+                    if s and s not in label_parts:
+                        label_parts.append(s)
+                comment_raw = _clean_comment_for_site(sense.get("comment") or "")
+                if comment_raw and comment_raw not in label_parts:
+                    label_parts.append(comment_raw)
+                comment = "; ".join(label_parts)
                 if text or comment:
                     word_has_phrase = True
                     if av_first:
